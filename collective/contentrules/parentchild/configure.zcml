@@ -1,0 +1,101 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    xmlns:plone="http://namespaces.plone.org/plone"
+    i18n_domain="collective.contentrules.parentchild">
+
+    <include package="plone.contentrules" file="meta.zcml" />
+    <include package="plone.app.contentrules" />
+    
+    <!-- Child type condition -->
+
+    <adapter factory=".child.ChildConditionExecutor" />
+    
+    <browser:page 
+        for="plone.app.contentrules.browser.interfaces.IRuleConditionAdding"
+        name="collective.contentrules.parentchild.Child"
+        class=".child.ChildAddForm"
+        permission="cmf.ManagePortal"
+        />
+      
+    <browser:page 
+        for=".child.IChildCondition"
+        name="edit"
+        class=".child.ChildEditForm"
+        permission="cmf.ManagePortal"
+        />
+    
+    <plone:ruleCondition
+        name="collective.contentrules.parentchild.Child"
+        title="Child of type of exists"
+        description="Test for a child object of a given type and/or workflow state"
+        for="*"
+        event="zope.component.interfaces.IObjectEvent"
+        addview="collective.contentrules.parentchild.Child"
+        editview="edit"
+        schema=".child.IChildCondition"
+        factory=".child.ChildCondition"
+        />
+    
+    <!-- Auto transition action -->
+
+    <adapter factory=".autotransition.AutoTransitionActionExecutor" />
+    
+    <browser:page 
+        for="plone.app.contentrules.browser.interfaces.IRuleActionAdding"
+        name="collective.contentrules.parentchild.AutoTransition"
+        class=".autotransition.AutoTransitionAddForm"
+        permission="cmf.ManagePortal"
+        />
+      
+    <browser:page 
+        for=".autotransition.IAutoTransitionAction"
+        name="edit"
+        class=".autotransition.AutoTransitionEditForm"
+        permission="cmf.ManagePortal"
+        />
+    
+    <plone:ruleAction
+        name="collective.contentrules.parentchild.AutoTransition"
+        title="Invoke automatic workflow transitions"
+        description="Run any automatic workflow transitions available on the current object or a parent"
+        for="*"
+        event="zope.component.interfaces.IObjectEvent"
+        addview="collective.contentrules.parentchild.AutoTransition"
+        editview="edit"
+        schema=".autotransition.IAutoTransitionAction"
+        factory=".autotransition.AutoTransitionAction"
+        />
+        
+    <!-- Transition parent action -->
+
+    <adapter factory=".parenttransition.ParentTransitionActionExecutor" />
+    
+    <browser:page 
+        for="plone.app.contentrules.browser.interfaces.IRuleActionAdding"
+        name="collective.contentrules.parentchild.ParentTransition"
+        class=".parenttransition.ParentTransitionAddForm"
+        permission="cmf.ManagePortal"
+        />
+      
+    <browser:page 
+        for=".parenttransition.IParentTransitionAction"
+        name="edit"
+        class=".parenttransition.ParentTransitionEditForm"
+        permission="cmf.ManagePortal"
+        />
+    
+    <plone:ruleAction
+        name="collective.contentrules.parentchild.ParentTransition"
+        title="Transition parent"
+        description="Invoke a workflow transition on a parent action"
+        for="*"
+        event="zope.component.interfaces.IObjectEvent"
+        addview="collective.contentrules.parentchild.ParentTransition"
+        editview="edit"
+        schema=".parenttransition.IParentTransitionAction"
+        factory=".parenttransition.ParentTransitionAction"
+        />
+        
+
+</configure>
