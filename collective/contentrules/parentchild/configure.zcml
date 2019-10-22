@@ -96,5 +96,35 @@
         schema=".parenttransition.IParentTransitionAction"
         factory=".parenttransition.ParentTransitionAction"
         />
+        
+<!-- Query child action -->
+
+    <adapter factory=".childactions.ChildActionExecutor" />
+    
+    <browser:page 
+        for="plone.app.contentrules.browser.interfaces.IRuleActionAdding"
+        name="collective.contentrules.parentchild.ChildAction"
+        class=".childactions.ChildActionAddFormView"
+        permission="cmf.ManagePortal"
+        />
+      
+    <browser:page 
+        for=".childactions.IChildAction"
+        name="edit"
+        class=".childactions.ChildActionEditFormView"
+        permission="cmf.ManagePortal"
+        />
+    
+    <plone:ruleAction
+        name="collective.contentrules.parentchild.ChildAction"
+        title="Actions on Query"
+        description="Invoke actions based on a query"
+        for="*"
+        event="zope.component.interfaces.IObjectEvent"
+        addview="collective.contentrules.parentchild.ChildAction"
+        editview="edit"
+        schema=".childactions.IChildAction"
+        factory=".childactions.ChildAction"
+        />
     
 </configure>
