@@ -33,7 +33,7 @@ class TestAutoTransitionAction(TestCase):
         self.folder.f1.invokeFactory('Document', 'd1')
 
         self.portal.portal_workflow.setChainForPortalTypes(
-                ('Folder', 'Document', 'Large Plone Folder',),
+                ('Folder', 'Document', ),
                 ('simple_publication_workflow',),)
         
     def _autopublish(self):
@@ -141,7 +141,7 @@ class TestAutoTransitionAction(TestCase):
         e.parent = True
         e.check_types = set(['Folder'])
         
-        _createObjectByType('Large Plone Folder', self.folder.f1, id='f2')
+        _createObjectByType('Folder', self.folder.f1, id='f2')
         self.folder.f1.f2.invokeFactory('Folder', 'f3')
         
         self._autopublish()
@@ -158,7 +158,7 @@ class TestAutoTransitionAction(TestCase):
         e.parent = False
         e.check_types = set(['Folder'])
         
-        _createObjectByType('Large Plone Folder', self.folder.f1, id='f2')
+        _createObjectByType('Folder', self.folder.f1, id='f2')
         self.folder.f1.f2.invokeFactory('Document', 'd2')
         
         self._autopublish()

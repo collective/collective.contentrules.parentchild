@@ -97,7 +97,7 @@ class TestParentTransitionAction(TestCase):
         e.transition = 'publish'
         e.check_types = set(['Folder'])
         
-        _createObjectByType('Large Plone Folder', self.folder.f1, id='f2')
+        _createObjectByType('Folder', self.folder.f1, id='f2')
         self.folder.f1.f2.invokeFactory('Document', 'd2')
         
         old_state = self.portal.portal_workflow.getInfoFor(self.folder.f1.f2, 'review_state')

@@ -67,6 +67,7 @@ class AutoTransitionActionExecutor(object):
         self.event = event
 
     def __call__(self):
+        import pdb; pdb.set_trace()
         portal_workflow = getToolByName(self.context, 'portal_workflow', None)
         if portal_workflow is None:
             return False

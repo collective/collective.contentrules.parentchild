@@ -4,7 +4,7 @@ from zope.interface import implements, Interface
 from zope.component import adapts
 from zope.formlib import form
 from zope import schema
-from zope.app.component.hooks import getSite
+from zope.component.hooks import getSite
 from zope.i18nmessageid import MessageFactory
 
 from plone.contentrules.rule.interfaces import IExecutable, IRuleElementData
