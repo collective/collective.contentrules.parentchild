@@ -121,7 +121,7 @@ class ChildActionExecutor(object):
             return False
 
         # get the results of the query
-        querybuilder = getMultiAdapter((self.context, self.context.REQUEST),
+        querybuilder = getMultiAdapter((self.event.object, self.context.REQUEST),
                                        name='querybuilderresults')
         results = querybuilder(
             query=self.element.query, batch=False, limit=1000, brains=False, 
@@ -130,7 +130,9 @@ class ChildActionExecutor(object):
         # execute remaining actions for each of the results
         original_object = self.event.object
         for sub in results:
-            self.event.object = sub
+            self.event.object = sub.getObject()
+            import pdb
+            pdb.set_trace()
             for action in remaining_actions:
                 # original context is aq_parent(aq_inner(event.object)). Should this be the same?
                 executable = getMultiAdapter((self.context, action, self.event), IExecutable)
