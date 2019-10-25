@@ -131,8 +131,6 @@ class ChildActionExecutor(object):
         original_object = self.event.object
         for sub in results:
             self.event.object = sub.getObject()
-            import pdb
-            pdb.set_trace()
             for action in remaining_actions:
                 # original context is aq_parent(aq_inner(event.object)). Should this be the same?
                 executable = getMultiAdapter((self.context, action, self.event), IExecutable)
