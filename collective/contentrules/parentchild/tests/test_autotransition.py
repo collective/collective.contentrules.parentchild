@@ -1,7 +1,7 @@
 from unittest import defaultTestLoader
 import unittest
 
-from zope.interface import implements
+from zope.interface import implementer
 from zope.component import getUtility, getMultiAdapter
 
 from plone.contentrules.engine.interfaces import IRuleStorage
@@ -20,8 +20,8 @@ from Products.DCWorkflow.Transitions import TRIGGER_AUTOMATIC
 
 from collective.contentrules.parentchild.testing import FUNCTIONAL_TESTING
 
+@implementer(IObjectEvent)
 class DummyEvent(object):
-    implements(IObjectEvent)
     
     def __init__(self, object):
         self.object = object
@@ -65,7 +65,7 @@ class TestAutoTransitionAction(unittest.TestCase):
         addview.add(addview.create(data={'parent' : True, 'check_types': set(['Document'])}))
         
         e = rule.actions[0]
-        self.failUnless(isinstance(e, AutoTransitionAction))
+        self.assertTrue(isinstance(e, AutoTransitionAction))
         self.assertEquals(True, e.parent)
         self.assertEquals(set(['Document']), e.check_types)
     
@@ -73,7 +73,7 @@ class TestAutoTransitionAction(unittest.TestCase):
         element = getUtility(IRuleAction, name='collective.contentrules.parentchild.AutoTransition')
         e = AutoTransitionAction()
         editview = getMultiAdapter((e, self.folder.REQUEST), name=element.editview).form_instance
-        self.failUnless(isinstance(editview, AutoTransitionEditForm))
+        self.assertTrue(isinstance(editview, AutoTransitionEditForm))
 
     def testExecuteCurrent(self): 
         e = AutoTransitionAction()

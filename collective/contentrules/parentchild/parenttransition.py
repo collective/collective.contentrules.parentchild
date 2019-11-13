@@ -86,7 +86,7 @@ class ParentTransitionActionExecutor(object):
             portal_workflow.doActionFor(obj, self.element.transition)
         except ConflictError as e:
             raise e
-        except Exception, e:
+        except Exception as e:
             self.error(obj, str(e))
             return False
         

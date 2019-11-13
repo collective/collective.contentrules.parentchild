@@ -1,7 +1,7 @@
 from unittest import defaultTestLoader
 import unittest
 
-from zope.interface import implements
+from zope.interface import implementer
 from zope.component import getUtility, getMultiAdapter
 
 from zope.component.interfaces import IObjectEvent
@@ -17,8 +17,8 @@ from plone.app.contentrules.rule import Rule
 
 from collective.contentrules.parentchild.testing import FUNCTIONAL_TESTING
 
+@implementer(IObjectEvent)
 class DummyEvent(object):
-    implements(IObjectEvent)
     
     def __init__(self, obj):
         self.object = obj
@@ -56,7 +56,7 @@ class TestChildCondition(unittest.TestCase):
         addview.add(condition)
         
         e = rule.conditions[0]
-        self.failUnless(isinstance(e, ChildCondition))
+        self.assertTrue(isinstance(e, ChildCondition))
         self.assertEquals(set(['Folder', 'Image']), e.check_types)
         self.assertEquals(set(['published']), e.wf_states)
         self.assertEquals(True, e.recursive)
@@ -67,7 +67,7 @@ class TestChildCondition(unittest.TestCase):
         element = getUtility(IRuleCondition, name='collective.contentrules.parentchild.Child')
         e = ChildCondition()
         editview = getMultiAdapter((e, self.folder.REQUEST), name=element.editview).form_instance
-        self.failUnless(isinstance(editview, ChildEditForm))
+        self.assertTrue(isinstance(editview, ChildEditForm))
 
     def testExecuteType(self): 
         e = ChildCondition()

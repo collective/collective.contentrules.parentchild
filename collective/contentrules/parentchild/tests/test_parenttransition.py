@@ -1,6 +1,6 @@
 from unittest import defaultTestLoader
 
-from zope.interface import implements
+from zope.interface import implementer
 from zope.component import getUtility, getMultiAdapter
 
 from plone.contentrules.engine.interfaces import IRuleStorage
@@ -19,9 +19,8 @@ from Products.CMFPlone.utils import _createObjectByType
 from collective.contentrules.parentchild.testing import FUNCTIONAL_TESTING
 import unittest
 
-
-class DummyEvent(object):
-    implements(IObjectEvent)
+@implementer(IObjectEvent)
+class DummyEvent(object):  
     
     def __init__(self, object):
         self.object = object
@@ -56,7 +55,7 @@ class TestParentTransitionAction(unittest.TestCase):
         addview.add(addview.create(data={'transition' : 'publish', 'check_types': set(['Document'])}))
         
         e = rule.actions[0]
-        self.failUnless(isinstance(e, ParentTransitionAction))
+        self.assertTrue(isinstance(e, ParentTransitionAction))
         self.assertEquals('publish', e.transition)
         self.assertEquals(set(['Document']), e.check_types)
     
@@ -64,7 +63,7 @@ class TestParentTransitionAction(unittest.TestCase):
         element = getUtility(IRuleAction, name='collective.contentrules.parentchild.ParentTransition')
         e = ParentTransitionAction()
         editview = getMultiAdapter((e, self.folder.REQUEST), name=element.editview).form_instance
-        self.failUnless(isinstance(editview, ParentTransitionEditForm))
+        self.assertTrue(isinstance(editview, ParentTransitionEditForm))
 
     def testExecute(self): 
         e = ParentTransitionAction()
