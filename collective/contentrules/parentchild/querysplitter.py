@@ -24,6 +24,8 @@ from plone.autoform import directives as form
 from zope.interface import provider
 from zope.schema.interfaces import IContextSourceBinder
 from zope.schema.vocabulary import SimpleVocabulary
+from zope.component.hooks import getSite
+
 
 _ = MessageFactory('collective.contentrules.parentchild')
 
@@ -63,7 +65,10 @@ class IQuerySplitter(Interface):
     form.widget('query', QueryStringFieldWidget)
     
     # TODO: optional event to fire on children? or maybe pick a rule name?
-         
+
+def query2str(query):
+    return ', '.join([' '.join([c['i'],c['o'].split('.').pop(),c['v']]) for c in query])
+
 class QuerySplitter(SimpleItem):
     """The actual persistent implementation of the query splitter.
     """
@@ -77,9 +82,11 @@ class QuerySplitter(SimpleItem):
     
     @property
     def summary(self):
-        return _(u"Execute ${rule} rule on query: ${query}", mapping=dict(rule=self.action_source, query=self.query))
-        # TODO: describe query
-    
+        portal = getSite()
+        rule = self.action_source if self.action_source != '__this__' else 'this'
+        msgid = _(u'Execute ${rule} rule on "${query}" instead', mapping=dict(rule=rule, query=query2str(self.query)))
+        return portal.translate(msgid)
+
 class QuerySplitterExecutor(object):
     """The executor for this condition.
     """

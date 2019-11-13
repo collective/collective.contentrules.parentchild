@@ -123,6 +123,15 @@ class TestQuerySplitter(TestCase):
         self.assertEquals('published', self.portal.portal_workflow.getInfoFor(self.folder.f1.d1, 'review_state'))
         self.assertEquals('published', self.portal.portal_workflow.getInfoFor(self.folder.f1.f2, 'review_state'))
         self.assertEquals('published', self.portal.portal_workflow.getInfoFor(self.folder.f1.f2.d2, 'review_state'))
-    
+
+    def testSummary(self): 
+        _createObjectByType('Folder', self.folder.f1, id='f2')
+
+        rule = self._createRule()
+        e = rule.conditions[0]
+        e.action_source = '__this__'
+        e.query = [{"i":"path", "o":"plone.app.querystring.operation.string.relativePath","v":"..::-1"}]
+        self.assertEquals('Execute this rule on "path relativePath ..::-1" instead', e.summary)
+
 def test_suite():
     return defaultTestLoader.loadTestsFromName(__name__)
