@@ -99,32 +99,32 @@
         
 <!-- Query child action -->
 
-    <adapter factory=".childactions.ChildActionExecutor" />
+    <adapter factory=".querysplitter.QuerySplitterExecutor" />
     
     <browser:page 
-        for="plone.app.contentrules.browser.interfaces.IRuleActionAdding"
-        name="collective.contentrules.parentchild.ChildAction"
-        class=".childactions.ChildActionAddFormView"
+        for="plone.app.contentrules.browser.interfaces.IRuleConditionAdding"
+        name="collective.contentrules.parentchild.QuerySplitter"
+        class=".querysplitter.QuerySplitterAddFormView"
         permission="cmf.ManagePortal"
         />
       
     <browser:page 
-        for=".childactions.IChildAction"
+        for=".querysplitter.IQuerySplitter"
         name="edit"
-        class=".childactions.ChildActionEditFormView"
+        class=".querysplitter.QuerySplitterEditFormView"
         permission="cmf.ManagePortal"
         />
     
-    <plone:ruleAction
-        name="collective.contentrules.parentchild.ChildAction"
-        title="Actions on Query"
-        description="Invoke actions based on a query"
+    <plone:ruleCondition
+        name="collective.contentrules.parentchild.QuerySplitter"
+        title="Query Splitter"
+        description="Special condition which executes a given rule on all results of a query"
         for="*"
         event="zope.component.interfaces.IObjectEvent"
-        addview="collective.contentrules.parentchild.ChildAction"
+        addview="collective.contentrules.parentchild.QuerySplitter"
         editview="edit"
-        schema=".childactions.IChildAction"
-        factory=".childactions.ChildAction"
+        schema=".querysplitter.IQuerySplitter"
+        factory=".querysplitter.QuerySplitter"
         />
     
 </configure>
