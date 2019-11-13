@@ -44,10 +44,11 @@ class TestQuerySplitter(TestCase):
         addview.updateFields()
         
         condition = addview.create(data={'action_source':'__this__',
-            'query':[{"i":"path", "o":"plone.app.querystring.operation.string.relativePath","v":"..::1"}]})
+            'query':[{"i":"path", "o":"plone.app.querystring.operation.string.relativePath","v":".::1"}]})
         addview.add(condition)
 
         action = AutoTransitionAction()
+        action.parent = False
         addview.add(action)
         self._autopublish()
         return rule
@@ -77,55 +78,51 @@ class TestQuerySplitter(TestCase):
         editview = getMultiAdapter((e, self.folder.REQUEST), name=element.editview)
         self.failUnless(isinstance(editview, QuerySplitterEditForm))
 
-    def testExecuteRule(self): 
+    def testExecuteChild(self): 
         rule = self._createRule()
         e = rule.conditions[0]
         e.action_source = '__this__'
-        e.query = [{"i":"path", "o":"plone.app.querystring.operation.string.relativePath","v":"..::1"}]
+        e.query = [{"i":"path", "o":"plone.app.querystring.operation.string.relativePath","v":".::1"}]
         
         ex = getMultiAdapter((self.folder, rule, DummyEvent(self.folder.f1)), IExecutable)
         # we always get False since it won't execute the rule on the context
         self.assertEquals(False, ex())
         
         self.assertEquals('published', self.portal.portal_workflow.getInfoFor(self.folder.f1.d1, 'review_state'))
-        
-    def testExecuteWithError(self): 
-        e = QuerySplitter()
-        e.transition = 'foobar'
-        e.check_types = None
-        
-        old_state = self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state')
-        
-        ex = getMultiAdapter((self.folder, e, DummyEvent(self.folder.f1.d1)), IExecutable)
-        self.assertEquals(False, ex())
-        
-        self.assertEquals(old_state, self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
+        self.assertEquals('private', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
 
     def testExecuteTypeImmediateParent(self): 
-        e = ParentTransitionAction()
-        e.transition = 'publish'
-        e.check_types = set(['Folder'])
+        rule = self._createRule()
+        e = rule.conditions[0]
+        e.action_source = '__this__'
+        e.query = [{"i":"path", "o":"plone.app.querystring.operation.string.relativePath","v":"..::0"}]
         
-        ex = getMultiAdapter((self.folder, e, DummyEvent(self.folder.f1.d1)), IExecutable)
-        self.assertEquals(True, ex())
+        ex = getMultiAdapter((self.folder, rule, DummyEvent(self.folder.f1.d1)), IExecutable)
+        # we always get False since it won't execute the rule on the context
+        self.assertEquals(False, ex())
         
         self.assertEquals('published', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
+        self.assertEquals('private', self.portal.portal_workflow.getInfoFor(self.folder.f1.d1, 'review_state'))
 
-    def testExecuteTypeNestedParent(self): 
-        e = ParentTransitionAction()
-        e.transition = 'publish'
-        e.check_types = set(['Folder'])
-        
+    # TODO: can't do nested parents
+
+    def testExecuteTypeDescendents(self): 
         _createObjectByType('Folder', self.folder.f1, id='f2')
         self.folder.f1.f2.invokeFactory('Document', 'd2')
+
+        rule = self._createRule()
+        e = rule.conditions[0]
+        e.action_source = '__this__'
+        e.query = [{"i":"path", "o":"plone.app.querystring.operation.string.relativePath","v":"..::-1"}]
         
-        old_state = self.portal.portal_workflow.getInfoFor(self.folder.f1.f2, 'review_state')
-        
-        ex = getMultiAdapter((self.folder, e, DummyEvent(self.folder.f1.f2.d1)), IExecutable)
-        self.assertEquals(True, ex())
+        ex = getMultiAdapter((self.folder, rule, DummyEvent(self.folder.f1)), IExecutable)
+        # we always get False since it won't execute the rule on the context
+        self.assertEquals(False, ex())
         
         self.assertEquals('published', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
-        self.assertEquals(old_state, self.portal.portal_workflow.getInfoFor(self.folder.f1.f2, 'review_state'))
+        self.assertEquals('published', self.portal.portal_workflow.getInfoFor(self.folder.f1.d1, 'review_state'))
+        self.assertEquals('published', self.portal.portal_workflow.getInfoFor(self.folder.f1.f2, 'review_state'))
+        self.assertEquals('published', self.portal.portal_workflow.getInfoFor(self.folder.f1.f2.d2, 'review_state'))
     
 def test_suite():
     return defaultTestLoader.loadTestsFromName(__name__)

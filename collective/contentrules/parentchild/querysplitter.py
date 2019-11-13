@@ -100,7 +100,6 @@ class QuerySplitterExecutor(object):
             # iterate over all actions in all rules to find this one
 
             #rule = [rule for rule in storage.values() if any([a for a in rule.actions if a == self.element])].pop()
-            import pdb; pdb.set_trace()
             for rule in storage.values():
                 for executable in rule.conditions + rule.actions:
                     if remaining is not None:
@@ -119,7 +118,7 @@ class QuerySplitterExecutor(object):
             return False
 
         # get the results of the query
-        querybuilder = getMultiAdapter((self.context, self.context.REQUEST),
+        querybuilder = getMultiAdapter((self.event.object, self.context.REQUEST),
                                        name='querybuilderresults')
         results = querybuilder(
             query=self.element.query, batch=False, limit=1000, brains=False, 
@@ -128,7 +127,7 @@ class QuerySplitterExecutor(object):
         # execute remaining actions for each of the results
         original_object = self.event.object
         for sub in results:
-            self.event.object = sub
+            self.event.object = sub.getObject()
             for action in remaining:
                 # original context is aq_parent(aq_inner(event.object)). Should this be the same?
                 executable = getMultiAdapter((self.context, action, self.event), IExecutable)
