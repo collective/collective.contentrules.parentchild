@@ -47,10 +47,10 @@ class TestAutoTransitionAction(unittest.TestCase):
 
     def testRegistered(self): 
         element = getUtility(IRuleAction, name='collective.contentrules.parentchild.AutoTransition')
-        self.assertEquals('collective.contentrules.parentchild.AutoTransition', element.addview)
-        self.assertEquals('edit', element.editview)
-        self.assertEquals(None, element.for_)
-        self.assertEquals(IObjectEvent, element.event)
+        self.assertEqual('collective.contentrules.parentchild.AutoTransition', element.addview)
+        self.assertEqual('edit', element.editview)
+        self.assertEqual(None, element.for_)
+        self.assertEqual(IObjectEvent, element.event)
     
     def testInvokeAddView(self): 
         element = getUtility(IRuleAction, name='collective.contentrules.parentchild.AutoTransition')
@@ -66,8 +66,8 @@ class TestAutoTransitionAction(unittest.TestCase):
         
         e = rule.actions[0]
         self.assertTrue(isinstance(e, AutoTransitionAction))
-        self.assertEquals(True, e.parent)
-        self.assertEquals(set(['Document']), e.check_types)
+        self.assertEqual(True, e.parent)
+        self.assertEqual(set(['Document']), e.check_types)
     
     def testInvokeEditView(self): 
         element = getUtility(IRuleAction, name='collective.contentrules.parentchild.AutoTransition')
@@ -83,10 +83,10 @@ class TestAutoTransitionAction(unittest.TestCase):
         self._autopublish()
         
         ex = getMultiAdapter((self.folder, e, DummyEvent(self.folder.f1.d1)), IExecutable)
-        self.assertEquals(True, ex())
+        self.assertEqual(True, ex())
         
-        self.assertEquals('private', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
-        self.assertEquals('published', self.portal.portal_workflow.getInfoFor(self.folder.f1.d1, 'review_state'))
+        self.assertEqual('private', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
+        self.assertEqual('published', self.portal.portal_workflow.getInfoFor(self.folder.f1.d1, 'review_state'))
 
     def testExecuteParent(self): 
         e = AutoTransitionAction()
@@ -96,10 +96,10 @@ class TestAutoTransitionAction(unittest.TestCase):
         self._autopublish()
         
         ex = getMultiAdapter((self.folder, e, DummyEvent(self.folder.f1.d1)), IExecutable)
-        self.assertEquals(True, ex())
+        self.assertEqual(True, ex())
         
-        self.assertEquals('private', self.portal.portal_workflow.getInfoFor(self.folder.f1.d1, 'review_state'))
-        self.assertEquals('published', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
+        self.assertEqual('private', self.portal.portal_workflow.getInfoFor(self.folder.f1.d1, 'review_state'))
+        self.assertEqual('published', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
 
     def testExecuteCurrentTypeCheck(self): 
         e = AutoTransitionAction()
@@ -111,10 +111,10 @@ class TestAutoTransitionAction(unittest.TestCase):
         self._autopublish()
         
         ex = getMultiAdapter((self.folder, e, DummyEvent(self.folder.f1.f2)), IExecutable)
-        self.assertEquals(True, ex())
+        self.assertEqual(True, ex())
         
-        self.assertEquals('private', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
-        self.assertEquals('published', self.portal.portal_workflow.getInfoFor(self.folder.f1.f2, 'review_state'))
+        self.assertEqual('private', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
+        self.assertEqual('published', self.portal.portal_workflow.getInfoFor(self.folder.f1.f2, 'review_state'))
 
     def testExecuteCurrentTypeCheckPicksParent(self): 
         e = AutoTransitionAction()
@@ -124,10 +124,10 @@ class TestAutoTransitionAction(unittest.TestCase):
         self._autopublish()
         
         ex = getMultiAdapter((self.folder, e, DummyEvent(self.folder.f1.d1)), IExecutable)
-        self.assertEquals(True, ex())
+        self.assertEqual(True, ex())
         
-        self.assertEquals('published', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
-        self.assertEquals('private', self.portal.portal_workflow.getInfoFor(self.folder.f1.d1, 'review_state'))
+        self.assertEqual('published', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
+        self.assertEqual('private', self.portal.portal_workflow.getInfoFor(self.folder.f1.d1, 'review_state'))
 
     def testExecuteParentTypeCheck(self): 
         e = AutoTransitionAction()
@@ -137,10 +137,10 @@ class TestAutoTransitionAction(unittest.TestCase):
         self._autopublish()
         
         ex = getMultiAdapter((self.folder, e, DummyEvent(self.folder.f1.d1)), IExecutable)
-        self.assertEquals(True, ex())
+        self.assertEqual(True, ex())
         
-        self.assertEquals('private', self.portal.portal_workflow.getInfoFor(self.folder.f1.d1, 'review_state'))
-        self.assertEquals('published', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
+        self.assertEqual('private', self.portal.portal_workflow.getInfoFor(self.folder.f1.d1, 'review_state'))
+        self.assertEqual('published', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
 
     def testExecuteParentTypeCheckPicksGrandparent(self): 
         e = AutoTransitionAction()
@@ -154,12 +154,12 @@ class TestAutoTransitionAction(unittest.TestCase):
         self._autopublish()
         
         ex = getMultiAdapter((self.folder, e, DummyEvent(self.folder.f1.f2.f3)), IExecutable)
-        self.assertEquals(True, ex())
+        self.assertEqual(True, ex())
         
-        self.assertEquals('published', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
+        self.assertEqual('published', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
         self.folder.f1.f2.portal_type = "Folder"
-        self.assertEquals('private', self.portal.portal_workflow.getInfoFor(self.folder.f1.f2, 'review_state'))
-        self.assertEquals('private', self.portal.portal_workflow.getInfoFor(self.folder.f1.f2.f3, 'review_state'))
+        self.assertEqual('private', self.portal.portal_workflow.getInfoFor(self.folder.f1.f2, 'review_state'))
+        self.assertEqual('private', self.portal.portal_workflow.getInfoFor(self.folder.f1.f2.f3, 'review_state'))
 
     def testExecutCurrentTypeCheckPicksGrandparent(self): 
         e = AutoTransitionAction()
@@ -173,12 +173,12 @@ class TestAutoTransitionAction(unittest.TestCase):
         self._autopublish()
         
         ex = getMultiAdapter((self.folder, e, DummyEvent(self.folder.f1.f2.d2)), IExecutable)
-        self.assertEquals(True, ex())
+        self.assertEqual(True, ex())
         
-        self.assertEquals('published', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
+        self.assertEqual('published', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
         self.folder.f1.f2.portal_type = 'Folder'
-        self.assertEquals('private', self.portal.portal_workflow.getInfoFor(self.folder.f1.f2, 'review_state'))
-        self.assertEquals('private', self.portal.portal_workflow.getInfoFor(self.folder.f1.f2.d2, 'review_state'))
+        self.assertEqual('private', self.portal.portal_workflow.getInfoFor(self.folder.f1.f2, 'review_state'))
+        self.assertEqual('private', self.portal.portal_workflow.getInfoFor(self.folder.f1.f2.d2, 'review_state'))
 
 def test_suite():
     return defaultTestLoader.loadTestsFromName(__name__)

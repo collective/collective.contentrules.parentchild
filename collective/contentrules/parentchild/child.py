@@ -114,7 +114,7 @@ class ChildConditionExecutor(object):
             # without the depth parameter, we could have obtained the source object itself
             results = filter(lambda x: x.getPath() != obj_path, results)
         
-        result_count = len(results)
+        result_count = len(list(results))
         if result_count < self.element.min_count:
             return False
         
