@@ -1,6 +1,6 @@
 from OFS.SimpleItem import SimpleItem
 
-from zope.interface import implements, Interface
+from zope.interface import implementer, Interface
 from zope.component import adapts
 from zope import schema
 from zope.component.hooks import getSite
@@ -49,12 +49,12 @@ class IChildCondition(Interface):
                                min=1,
                                required=False)
          
+@implementer(IChildCondition, IRuleElementData)
 class ChildCondition(SimpleItem):
     """The actual persistent implementation of the portal type condition element.
     
     Note that we must mix in SimpleItem to keep Zope 2 security happy.
     """
-    implements(IChildCondition, IRuleElementData)
     
     check_types = None
     wf_states = None
@@ -80,10 +80,10 @@ class ChildCondition(SimpleItem):
         return _(u"Child exists of type ${names} and/or state ${states}",
                    mapping=dict(names=", ".join(types), states=','.join(states)))
 
+@implementer(IExecutable)
 class ChildConditionExecutor(object):
     """The executor for this condition.
     """
-    implements(IExecutable)
     adapts(Interface, IChildCondition, Interface)
          
     def __init__(self, context, element, event):

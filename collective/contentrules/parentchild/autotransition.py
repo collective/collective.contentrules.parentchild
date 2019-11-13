@@ -1,6 +1,6 @@
 from OFS.SimpleItem import SimpleItem
 
-from zope.interface import implements, Interface
+from zope.interface import implementer, Interface
 from zope.component import adapts
 from zope import schema
 from zope.i18nmessageid import MessageFactory
@@ -39,10 +39,10 @@ class IAutoTransitionAction(Interface):
                              value_type=schema.Choice(title=_(u"Type"),
                                                        vocabulary="plone.app.vocabularies.PortalTypes"))
          
+@implementer(IAutoTransitionAction, IRuleElementData)
 class AutoTransitionAction(SimpleItem):
     """The actual persistent implementation of the action element.
     """
-    implements(IAutoTransitionAction, IRuleElementData)
     
     parent = True
     check_types = None
@@ -56,10 +56,10 @@ class AutoTransitionAction(SimpleItem):
         else:
             return _(u"Execute automatic transitions on a parent object")
     
+@implementer(IExecutable)
 class AutoTransitionActionExecutor(object):
     """The executor for this action.
     """
-    implements(IExecutable)
     adapts(Interface, IAutoTransitionAction, Interface)
          
     def __init__(self, context, element, event):

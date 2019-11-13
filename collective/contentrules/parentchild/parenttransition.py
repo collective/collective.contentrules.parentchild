@@ -1,6 +1,6 @@
 from OFS.SimpleItem import SimpleItem
 
-from zope.interface import implements, Interface
+from zope.interface import implementer, Interface
 from zope.component import adapts
 from zope import schema
 from zope.i18nmessageid import MessageFactory
@@ -40,10 +40,10 @@ class IParentTransitionAction(Interface):
                               value_type=schema.Choice(title=_(u"Type"),
                                                        vocabulary="plone.app.vocabularies.PortalTypes"))
          
+@implementer(IParentTransitionAction, IRuleElementData)
 class ParentTransitionAction(SimpleItem):
     """The actual persistent implementation of the action element.
     """
-    implements(IParentTransitionAction, IRuleElementData)
     
     transition = ''
     check_types = None
@@ -54,10 +54,11 @@ class ParentTransitionAction(SimpleItem):
     def summary(self):
         return _(u"Execute transition ${transition} on parent", mapping=dict(transition=self.transition))
     
+@implementer(IExecutable)    
 class ParentTransitionActionExecutor(object):
     """The executor for this action.
     """
-    implements(IExecutable)
+    
     adapts(Interface, IParentTransitionAction, Interface)
          
     def __init__(self, context, element, event):
@@ -83,7 +84,7 @@ class ParentTransitionActionExecutor(object):
         
         try:
             portal_workflow.doActionFor(obj, self.element.transition)
-        except ConflictError, e:
+        except ConflictError as e:
             raise e
         except Exception, e:
             self.error(obj, str(e))
