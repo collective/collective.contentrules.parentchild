@@ -2,13 +2,14 @@ from OFS.SimpleItem import SimpleItem
 
 from zope.interface import implements, Interface
 from zope.component import adapts
-from zope.formlib import form
 from zope import schema
 from zope.i18nmessageid import MessageFactory
+from z3c.form.form import applyChanges
 
 from plone.contentrules.rule.interfaces import IExecutable, IRuleElementData
 
 from plone.app.contentrules.browser.formhelper import AddForm, EditForm 
+from plone.app.contentrules.browser.formhelper import ContentRuleFormWrapper
 
 from Acquisition import aq_parent, aq_chain
 from ZODB.POSException import ConflictError
@@ -99,20 +100,26 @@ class ParentTransitionActionExecutor(object):
 class ParentTransitionAddForm(AddForm):
     """An add form for workflow actions.
     """
-    form_fields = form.FormFields(IParentTransitionAction)
+    schema = IParentTransitionAction
     label = _(u"Add Parent Transition Action")
     description = _(u"This action triggers a workflow transition on a parent object.")
     form_name = _(u"Configure element")
     
     def create(self, data):
         a = ParentTransitionAction()
-        form.applyChanges(a, self.form_fields, data)
+        applyChanges(self, a, data)
         return a
 
 class ParentTransitionEditForm(EditForm):
     """An edit form for workflow rule actions.
     """
-    form_fields = form.FormFields(IParentTransitionAction)
+    schema = IParentTransitionAction
     label = _(u"Edit PArent Transition Action")
     description = _(u"This action triggers a workflow transition on a parent object.")
     form_name = _(u"Configure element")
+
+class ParentTransitionAddFormView(ContentRuleFormWrapper):
+    form = ParentTransitionAddForm
+
+class ParentTransitionEditFormView(ContentRuleFormWrapper):
+    form = ParentTransitionEditForm

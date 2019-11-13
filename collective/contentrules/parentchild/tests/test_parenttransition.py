@@ -16,7 +16,9 @@ from zope.component.interfaces import IObjectEvent
 
 from Products.CMFPlone.utils import _createObjectByType
 
-from collective.contentrules.parentchild.tests.base import TestCase
+from collective.contentrules.parentchild.testing import FUNCTIONAL_TESTING
+import unittest
+
 
 class DummyEvent(object):
     implements(IObjectEvent)
@@ -24,10 +26,13 @@ class DummyEvent(object):
     def __init__(self, object):
         self.object = object
 
-class TestParentTransitionAction(TestCase):
+class TestParentTransitionAction(unittest.TestCase):
 
-    def afterSetUp(self):
-        self.setRoles(('Manager',))
+    layer = FUNCTIONAL_TESTING
+
+    def setUp(self):
+        self.portal = self.layer['portal']
+        self.folder = self.portal.folder
         self.folder.invokeFactory('Folder', 'f1')
         self.folder.f1.invokeFactory('Document', 'd1')
 
@@ -45,9 +50,9 @@ class TestParentTransitionAction(TestCase):
         rule = self.portal.restrictedTraverse('++rule++foo')
         
         adding = getMultiAdapter((rule, self.portal.REQUEST), name='+action')
-        addview = getMultiAdapter((adding, self.portal.REQUEST), name=element.addview)
+        addview = getMultiAdapter((adding, self.portal.REQUEST), name=element.addview).form_instance
         
-        addview.createAndAdd(data={'transition' : 'publish', 'check_types': set(['Document'])})
+        addview.add(addview.create(data={'transition' : 'publish', 'check_types': set(['Document'])}))
         
         e = rule.actions[0]
         self.failUnless(isinstance(e, ParentTransitionAction))
@@ -57,7 +62,7 @@ class TestParentTransitionAction(TestCase):
     def testInvokeEditView(self): 
         element = getUtility(IRuleAction, name='collective.contentrules.parentchild.ParentTransition')
         e = ParentTransitionAction()
-        editview = getMultiAdapter((e, self.folder.REQUEST), name=element.editview)
+        editview = getMultiAdapter((e, self.folder.REQUEST), name=element.editview).form_instance
         self.failUnless(isinstance(editview, ParentTransitionEditForm))
 
     def testExecute(self): 

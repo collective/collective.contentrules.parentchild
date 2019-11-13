@@ -1,4 +1,5 @@
 from unittest import defaultTestLoader
+import unittest
 
 from zope.interface import implements
 from zope.component import getUtility, getMultiAdapter
@@ -17,7 +18,7 @@ from zope.component.interfaces import IObjectEvent
 from Products.CMFPlone.utils import _createObjectByType
 from Products.DCWorkflow.Transitions import TRIGGER_AUTOMATIC
 
-from collective.contentrules.parentchild.tests.base import TestCase
+from collective.contentrules.parentchild.testing import FUNCTIONAL_TESTING
 
 class DummyEvent(object):
     implements(IObjectEvent)
@@ -25,10 +26,14 @@ class DummyEvent(object):
     def __init__(self, object):
         self.object = object
 
-class TestAutoTransitionAction(TestCase):
 
-    def afterSetUp(self):
-        self.setRoles(('Manager',))
+class TestAutoTransitionAction(unittest.TestCase):
+
+    layer = FUNCTIONAL_TESTING
+
+    def setUp(self):
+        self.portal = self.layer['portal']
+        self.folder = self.portal.folder
         self.folder.invokeFactory('Folder', 'f1')
         self.folder.f1.invokeFactory('Document', 'd1')
 
@@ -54,9 +59,9 @@ class TestAutoTransitionAction(TestCase):
         rule = self.portal.restrictedTraverse('++rule++foo')
         
         adding = getMultiAdapter((rule, self.portal.REQUEST), name='+action')
-        addview = getMultiAdapter((adding, self.portal.REQUEST), name=element.addview)
+        addview = getMultiAdapter((adding, self.portal.REQUEST), name=element.addview).form_instance
         
-        addview.createAndAdd(data={'parent' : True, 'check_types': set(['Document'])})
+        addview.add(addview.create(data={'parent' : True, 'check_types': set(['Document'])}))
         
         e = rule.actions[0]
         self.failUnless(isinstance(e, AutoTransitionAction))
@@ -66,7 +71,7 @@ class TestAutoTransitionAction(TestCase):
     def testInvokeEditView(self): 
         element = getUtility(IRuleAction, name='collective.contentrules.parentchild.AutoTransition')
         e = AutoTransitionAction()
-        editview = getMultiAdapter((e, self.folder.REQUEST), name=element.editview)
+        editview = getMultiAdapter((e, self.folder.REQUEST), name=element.editview).form_instance
         self.failUnless(isinstance(editview, AutoTransitionEditForm))
 
     def testExecuteCurrent(self): 

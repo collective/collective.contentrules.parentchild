@@ -2,12 +2,13 @@ from OFS.SimpleItem import SimpleItem
 
 from zope.interface import implements, Interface
 from zope.component import adapts
-from zope.formlib import form
 from zope import schema
 from zope.component.hooks import getSite
 from zope.i18nmessageid import MessageFactory
+from z3c.form.form import applyChanges
 
 from plone.contentrules.rule.interfaces import IExecutable, IRuleElementData
+from plone.app.contentrules.browser.formhelper import ContentRuleFormWrapper
 
 from plone.app.contentrules.browser.formhelper import AddForm, EditForm 
 
@@ -125,20 +126,27 @@ class ChildConditionExecutor(object):
 class ChildAddForm(AddForm):
     """An add form for portal type conditions.
     """
-    form_fields = form.FormFields(IChildCondition)
+    schema = IChildCondition
     label = _(u"Add Content Type Condition")
     description = _(u"A portal type condition makes the rule apply only to certain content types.")
     form_name = _(u"Configure element")
     
     def create(self, data):
         c = ChildCondition()
-        form.applyChanges(c, self.form_fields, data)
+        applyChanges(self, c, data)
         return c
 
 class ChildEditForm(EditForm):
     """An edit form for portal type conditions
     """
-    form_fields = form.FormFields(IChildCondition)
+    schema = IChildCondition
     label = _(u"Edit Content Type Condition")
     description = _(u"A portal type condition makes the rule apply only to certain content types.")
     form_name = _(u"Configure element")
+
+
+class ChildAddFormView(ContentRuleFormWrapper):
+    form = ChildAddForm
+
+class ChildEditFormView(ContentRuleFormWrapper):
+    form = ChildEditForm

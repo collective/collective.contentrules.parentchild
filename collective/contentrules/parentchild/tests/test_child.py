@@ -1,4 +1,5 @@
 from unittest import defaultTestLoader
+import unittest
 
 from zope.interface import implements
 from zope.component import getUtility, getMultiAdapter
@@ -14,7 +15,7 @@ from collective.contentrules.parentchild.child import ChildEditForm
 
 from plone.app.contentrules.rule import Rule
 
-from collective.contentrules.parentchild.tests.base import TestCase
+from collective.contentrules.parentchild.testing import FUNCTIONAL_TESTING
 
 class DummyEvent(object):
     implements(IObjectEvent)
@@ -22,10 +23,13 @@ class DummyEvent(object):
     def __init__(self, obj):
         self.object = obj
 
-class TestChildCondition(TestCase):
+class TestChildCondition(unittest.TestCase):
 
-    def afterSetUp(self):
-        self.setRoles(('Manager',))
+    layer = FUNCTIONAL_TESTING
+
+    def setUp(self):
+        self.portal = self.layer['portal']
+        self.folder = self.portal.folder
 
     def testRegistered(self): 
         element = getUtility(IRuleCondition, name='collective.contentrules.parentchild.Child')
@@ -41,13 +45,14 @@ class TestChildCondition(TestCase):
         rule = self.portal.restrictedTraverse('++rule++foo')
         
         adding = getMultiAdapter((rule, self.portal.REQUEST), name='+condition')
-        addview = getMultiAdapter((adding, self.portal.REQUEST), name=element.addview)
+        addview = getMultiAdapter((adding, self.portal.REQUEST), name=element.addview).form_instance
         
-        addview.createAndAdd(data={'check_types' : set(['Folder', 'Image']),
+        condition = addview.create(data={'check_types' : set(['Folder', 'Image']),
                                    'wf_states': set(['published']),
                                    'recursive': True,
                                    'min_count': 2,
                                    'max_count': 3})
+        addview.add(condition)
         
         e = rule.conditions[0]
         self.failUnless(isinstance(e, ChildCondition))
@@ -60,7 +65,7 @@ class TestChildCondition(TestCase):
     def testInvokeEditView(self): 
         element = getUtility(IRuleCondition, name='collective.contentrules.parentchild.Child')
         e = ChildCondition()
-        editview = getMultiAdapter((e, self.folder.REQUEST), name=element.editview)
+        editview = getMultiAdapter((e, self.folder.REQUEST), name=element.editview).form_instance
         self.failUnless(isinstance(editview, ChildEditForm))
 
     def testExecuteType(self): 
