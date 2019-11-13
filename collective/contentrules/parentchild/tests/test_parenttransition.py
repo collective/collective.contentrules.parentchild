@@ -102,10 +102,12 @@ class TestParentTransitionAction(TestCase):
         
         old_state = self.portal.portal_workflow.getInfoFor(self.folder.f1.f2, 'review_state')
         
+        self.folder.f1.f2.portal_type = 'Not Folder'
         ex = getMultiAdapter((self.folder, e, DummyEvent(self.folder.f1.f2.d1)), IExecutable)
         self.assertEquals(True, ex())
         
         self.assertEquals('published', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
+        self.folder.f1.f2.portal_type = 'Folder'
         self.assertEquals(old_state, self.portal.portal_workflow.getInfoFor(self.folder.f1.f2, 'review_state'))
     
 def test_suite():

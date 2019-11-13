@@ -143,13 +143,15 @@ class TestAutoTransitionAction(TestCase):
         
         _createObjectByType('Folder', self.folder.f1, id='f2')
         self.folder.f1.f2.invokeFactory('Folder', 'f3')
-        
+        self.folder.f1.f2.portal_type = "Not Folder"
+
         self._autopublish()
         
         ex = getMultiAdapter((self.folder, e, DummyEvent(self.folder.f1.f2.f3)), IExecutable)
         self.assertEquals(True, ex())
         
         self.assertEquals('published', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
+        self.folder.f1.f2.portal_type = "Folder"
         self.assertEquals('private', self.portal.portal_workflow.getInfoFor(self.folder.f1.f2, 'review_state'))
         self.assertEquals('private', self.portal.portal_workflow.getInfoFor(self.folder.f1.f2.f3, 'review_state'))
 
@@ -160,6 +162,7 @@ class TestAutoTransitionAction(TestCase):
         
         _createObjectByType('Folder', self.folder.f1, id='f2')
         self.folder.f1.f2.invokeFactory('Document', 'd2')
+        self.folder.f1.f2.portal_type = 'Not Folder'
         
         self._autopublish()
         
@@ -167,6 +170,7 @@ class TestAutoTransitionAction(TestCase):
         self.assertEquals(True, ex())
         
         self.assertEquals('published', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
+        self.folder.f1.f2.portal_type = 'Folder'
         self.assertEquals('private', self.portal.portal_workflow.getInfoFor(self.folder.f1.f2, 'review_state'))
         self.assertEquals('private', self.portal.portal_workflow.getInfoFor(self.folder.f1.f2.d2, 'review_state'))
 
