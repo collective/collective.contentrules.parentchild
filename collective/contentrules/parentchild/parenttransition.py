@@ -12,6 +12,8 @@ from plone.app.contentrules.browser.formhelper import AddForm, EditForm
 from plone.app.contentrules.browser.formhelper import ContentRuleFormWrapper
 
 from Acquisition import aq_parent, aq_chain
+from Acquisition import aq_parent, aq_inner, aq_base
+from Acquisition.interfaces import IAcquirer
 from ZODB.POSException import ConflictError
 from Products.CMFCore.utils import getToolByName
 
@@ -104,11 +106,17 @@ class ParentTransitionAddForm(AddForm):
     label = _(u"Add Parent Transition Action")
     description = _(u"This action triggers a workflow transition on a parent object.")
     form_name = _(u"Configure element")
+    Type = ParentTransitionAction
     
     def create(self, data):
-        a = ParentTransitionAction()
-        applyChanges(self, a, data)
-        return a
+        obj = self.Type()
+        container = aq_inner(self.context)
+
+        if IAcquirer.providedBy(obj):
+            obj = obj.__of__(container)
+        applyChanges(self, obj, data)
+        obj = aq_base(obj)
+        return obj
 
 class ParentTransitionEditForm(EditForm):
     """An edit form for workflow rule actions.

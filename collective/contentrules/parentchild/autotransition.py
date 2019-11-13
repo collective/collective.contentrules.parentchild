@@ -119,9 +119,10 @@ class AutoTransitionAddForm(AddForm):
     label = _(u"Add Auto Transition Action")
     description = _(u"This action triggers a workflow transition on a parent object.")
     form_name = _(u"Configure element")
+    Type = AutoTransitionAction
     
     def create(self, data):
-        a = AutoTransitionAction()
+        a = self.Type()
         applyChanges(self, a, data)
         return a
 

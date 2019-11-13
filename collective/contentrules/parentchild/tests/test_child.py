@@ -47,6 +47,7 @@ class TestChildCondition(unittest.TestCase):
         adding = getMultiAdapter((rule, self.portal.REQUEST), name='+condition')
         addview = getMultiAdapter((adding, self.portal.REQUEST), name=element.addview).form_instance
         
+        addview.updateFields()
         condition = addview.create(data={'check_types' : set(['Folder', 'Image']),
                                    'wf_states': set(['published']),
                                    'recursive': True,

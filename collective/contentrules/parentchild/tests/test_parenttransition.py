@@ -52,6 +52,7 @@ class TestParentTransitionAction(unittest.TestCase):
         adding = getMultiAdapter((rule, self.portal.REQUEST), name='+action')
         addview = getMultiAdapter((adding, self.portal.REQUEST), name=element.addview).form_instance
         
+        addview.updateFields()
         addview.add(addview.create(data={'transition' : 'publish', 'check_types': set(['Document'])}))
         
         e = rule.actions[0]
