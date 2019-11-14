@@ -23,9 +23,10 @@ from Products.CMFPlone.utils import _createObjectByType
 
 class DummyEvent(object):
     implements(IObjectEvent)
-    
+
     def __init__(self, object):
         self.object = object
+
 
 class TestQuerySplitter(unittest.TestCase):
 
@@ -42,13 +43,13 @@ class TestQuerySplitter(unittest.TestCase):
         storage = getUtility(IRuleStorage)
         storage[u'foo'] = Rule()
         rule = self.portal.restrictedTraverse('++rule++foo')
-        
+
         adding = getMultiAdapter((rule, self.portal.REQUEST), name='+condition')
         addview = getMultiAdapter((adding, self.portal.REQUEST), name=element.addview).form_instance
         addview.updateFields()
-        
-        condition = addview.create(data={'rule':'__this__',
-            'query':[{"i":"path", "o":"plone.app.querystring.operation.string.relativePath","v":".::1"}]})
+
+        condition = addview.create(data={'rule': '__this__',
+                                         'query': [{"i": "path", "o": "plone.app.querystring.operation.string.relativePath", "v": ".::1"}]})
         addview.add(condition)
 
         action = AutoTransitionAction()
@@ -61,81 +62,81 @@ class TestQuerySplitter(unittest.TestCase):
         # Publish on demand, baby
         self.portal.portal_workflow['simple_publication_workflow'].transitions.publish.trigger_type = TRIGGER_AUTOMATIC
 
-
-    def testRegistered(self): 
+    def testRegistered(self):
         element = getUtility(IRuleCondition, name='collective.contentrules.parentchild.QuerySplitter')
         self.assertEqual('collective.contentrules.parentchild.QuerySplitter', element.addview)
         self.assertEqual('edit', element.editview)
         self.assertEqual(None, element.for_)
         self.assertEqual(IObjectEvent, element.event)
-    
-    def testInvokeAddView(self): 
+
+    def testInvokeAddView(self):
         rule = self._createRule()
         e = rule.conditions[0]
         self.assertTrue(isinstance(e, QuerySplitter))
         self.assertEqual('path', e.query[0]['i'])
         self.assertEqual('__this__', e.rule)
-    
-    def testInvokeEditView(self): 
+
+    def testInvokeEditView(self):
         element = getUtility(IRuleCondition, name='collective.contentrules.parentchild.QuerySplitter')
         e = QuerySplitter()
         editview = getMultiAdapter((e, self.folder.REQUEST), name=element.editview).form_instance
         self.assertTrue(isinstance(editview, QuerySplitterEditForm))
 
-    def testExecuteChild(self): 
+    def testExecuteChild(self):
         rule = self._createRule()
         e = rule.conditions[0]
         e.rule = '__this__'
-        e.query = [{"i":"path", "o":"plone.app.querystring.operation.string.relativePath","v":".::1"}]
-        
+        e.query = [{"i": "path", "o": "plone.app.querystring.operation.string.relativePath", "v": ".::1"}]
+
         ex = getMultiAdapter((self.folder, rule, DummyEvent(self.folder.f1)), IExecutable)
         # we always get False since it won't execute the rule on the context
         self.assertEqual(False, ex())
-        
+
         self.assertEqual('published', self.portal.portal_workflow.getInfoFor(self.folder.f1.d1, 'review_state'))
         self.assertEqual('private', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
 
-    def testExecuteTypeImmediateParent(self): 
+    def testExecuteTypeImmediateParent(self):
         rule = self._createRule()
         e = rule.conditions[0]
         e.rule = '__this__'
-        e.query = [{"i":"path", "o":"plone.app.querystring.operation.string.relativePath","v":"..::0"}]
-        
+        e.query = [{"i": "path", "o": "plone.app.querystring.operation.string.relativePath", "v": "..::0"}]
+
         ex = getMultiAdapter((self.folder, rule, DummyEvent(self.folder.f1.d1)), IExecutable)
         # we always get False since it won't execute the rule on the context
         self.assertEqual(False, ex())
-        
+
         self.assertEqual('published', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
         self.assertEqual('private', self.portal.portal_workflow.getInfoFor(self.folder.f1.d1, 'review_state'))
 
     # TODO: can't do nested parents
 
-    def testExecuteTypeDescendents(self): 
+    def testExecuteTypeDescendents(self):
         _createObjectByType('Folder', self.folder.f1, id='f2')
         self.folder.f1.f2.invokeFactory('Document', 'd2')
 
         rule = self._createRule()
         e = rule.conditions[0]
         e.rule = '__this__'
-        e.query = [{"i":"path", "o":"plone.app.querystring.operation.string.relativePath","v":"..::-1"}]
-        
+        e.query = [{"i": "path", "o": "plone.app.querystring.operation.string.relativePath", "v": "..::-1"}]
+
         ex = getMultiAdapter((self.folder, rule, DummyEvent(self.folder.f1)), IExecutable)
         # we always get False since it won't execute the rule on the context
         self.assertEqual(False, ex())
-        
+
         self.assertEqual('published', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
         self.assertEqual('published', self.portal.portal_workflow.getInfoFor(self.folder.f1.d1, 'review_state'))
         self.assertEqual('published', self.portal.portal_workflow.getInfoFor(self.folder.f1.f2, 'review_state'))
         self.assertEqual('published', self.portal.portal_workflow.getInfoFor(self.folder.f1.f2.d2, 'review_state'))
 
-    def testSummary(self): 
+    def testSummary(self):
         _createObjectByType('Folder', self.folder.f1, id='f2')
 
         rule = self._createRule()
         e = rule.conditions[0]
         e.rule = '__this__'
-        e.query = [{"i":"path", "o":"plone.app.querystring.operation.string.relativePath","v":"..::-1"}]
+        e.query = [{"i": "path", "o": "plone.app.querystring.operation.string.relativePath", "v": "..::-1"}]
         self.assertEqual('Execute this rule on "path relativePath ..::-1" instead', e.summary)
+
 
 def test_suite():
     return defaultTestLoader.loadTestsFromName(__name__)

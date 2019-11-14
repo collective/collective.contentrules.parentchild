@@ -11,14 +11,9 @@ from zope.i18nmessageid import MessageFactory
 from plone.contentrules.rule.interfaces import IExecutable, IRuleElementData
 from plone.contentrules.engine.interfaces import IRuleStorage
 
-from plone.app.contentrules.browser.formhelper import AddForm, EditForm 
+from plone.app.contentrules.browser.formhelper import AddForm, EditForm
 from plone.app.contentrules.browser.formhelper import ContentRuleFormWrapper
 
-from Acquisition import aq_parent, aq_chain
-from Products.CMFCore.utils import getToolByName
-
-from Products.CMFPlone import utils
-from Products.statusmessages.interfaces import IStatusMessage
 from plone.app.z3cform.widget import QueryStringFieldWidget
 from plone.autoform import directives as form
 from zope.interface import provider
@@ -29,9 +24,10 @@ from zope.component.hooks import getSite
 
 _ = MessageFactory('collective.contentrules.parentchild')
 
+
 @provider(IContextSourceBinder)
 def rule_sources(context):
-    terms = [SimpleVocabulary.createTerm('__this__','__this__', 'This Rule: (excluding this action)')]
+    terms = [SimpleVocabulary.createTerm('__this__', '__this__', 'This Rule: (excluding this action)')]
     storage = queryUtility(IRuleStorage)
     for rule in storage.values():
         if rule == context.__parent__:
@@ -41,10 +37,10 @@ def rule_sources(context):
 
     return SimpleVocabulary(terms)
 
+
 class IQuerySplitter(Interface):
     """A special condition that will execute a rule on the results of a query instead of the original event context.
     """
-
 
     rule = schema.Choice(
         title=_(u'Rule'),
@@ -55,7 +51,8 @@ class IQuerySplitter(Interface):
 
     query = schema.List(
         title=_(u'Query'),
-        description=_(u'Query to find related items to fire a rule against. For example all children of the item that fired the event'),
+        description=_(
+            u'Query to find related items to fire a rule against. For example all children of the item that fired the event'),
         value_type=schema.Dict(value_type=schema.Field(),
                                key_type=schema.TextLine()),
         default=[{"i": "path", "o": "plone.app.querystring.operation.string.relativePath", "v": ".::1"}],
@@ -63,23 +60,25 @@ class IQuerySplitter(Interface):
         missing_value=''
     )
     form.widget('query', QueryStringFieldWidget)
-    
+
     # TODO: optional event to fire on children? or maybe pick a rule name?
 
+
 def query2str(query):
-    return ', '.join([' '.join([c['i'],c['o'].split('.').pop(),c['v']]) for c in query])
+    return ', '.join([' '.join([c['i'], c['o'].split('.').pop(), c['v']]) for c in query])
+
 
 @implementer(IQuerySplitter, IRuleElementData)
 class QuerySplitter(SimpleItem):
     """The actual persistent implementation of the query splitter.
     """
-    
+
     query = {}
 
     rule = None
-    
+
     element = "collective.contentrules.parentchild.QuerySplitter"
-    
+
     @property
     def summary(self):
         portal = getSite()
@@ -87,12 +86,13 @@ class QuerySplitter(SimpleItem):
         msgid = _(u'Execute ${rule} rule on "${query}" instead', mapping=dict(rule=rule, query=query2str(self.query)))
         return portal.translate(msgid)
 
+
 @implementer(IExecutable)
 @adapter(Interface, IQuerySplitter, Interface)
 class QuerySplitterExecutor(object):
     """The executor for this condition.
     """
-         
+
     def __init__(self, context, element, event):
         self.context = context
         self.element = element
@@ -105,8 +105,6 @@ class QuerySplitterExecutor(object):
         # TODO: this could result in loops.
         if self.element.rule == '__this__':
             # iterate over all actions in all rules to find this one
-
-            #rule = [rule for rule in storage.values() if any([a for a in rule.actions if a == self.element])].pop()
             for rule in storage.values():
                 for executable in rule.conditions + rule.actions:
                     if remaining is not None:
@@ -128,7 +126,7 @@ class QuerySplitterExecutor(object):
         querybuilder = getMultiAdapter((self.event.object, self.context.REQUEST),
                                        name='querybuilderresults')
         results = querybuilder(
-            query=self.element.query, batch=False, limit=1000, brains=False, 
+            query=self.element.query, batch=False, limit=1000, brains=False,
         )
 
         # execute remaining actions for each of the results
@@ -142,10 +140,9 @@ class QuerySplitterExecutor(object):
                     # TODO: we stop just teh current execution, not the whole search
                     break
 
-        self.event.object = original_object        
+        self.event.object = original_object
         # we don't want to continue the rule with the original event
         return False
-
 
 
 class QuerySplitterAddForm(AddForm):
@@ -173,7 +170,6 @@ class QuerySplitterEditForm(EditForm):
     label = _(u"Edit Query Splitter")
     description = _(u"Special condition which executes a given rule on all results of a query")
     form_name = _(u"Configure element")
-
 
 
 class QuerySplitterEditFormView(ContentRuleFormWrapper):

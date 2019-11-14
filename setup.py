@@ -6,14 +6,13 @@ version = '1.0b2'
 setup(name='collective.contentrules.parentchild',
       version=version,
       description="Content rules conditions and actions for expressing parent/child object relationships",
-      long_description=open("README.md").read() + "\n" +
-                       open(os.path.join("docs", "HISTORY.txt")).read(),
+      long_description=open("README.md").read() + "\n" + open(os.path.join("docs", "HISTORY.txt")).read(),
       # Get more strings from http://www.python.org/pypi?%3Aaction=list_classifiers
       classifiers=[
-        "Framework :: Plone",
-        "Programming Language :: Python",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-        ],
+          "Framework :: Plone",
+          "Programming Language :: Python",
+          "Topic :: Software Development :: Libraries :: Python Modules",
+      ],
       keywords='plone content rules',
       author='Martin Aspeli',
       author_email='optilude@gmail.com',
