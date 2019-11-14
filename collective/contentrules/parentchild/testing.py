@@ -5,8 +5,6 @@ from plone.app.testing import login, setRoles
 from Products.Five import fiveconfigure
 from plone.app.testing import FunctionalTesting
 
-from plone.testing import z2
-
 
 class ParentChild(PloneSandboxLayer):
 
@@ -14,7 +12,7 @@ class ParentChild(PloneSandboxLayer):
 
     def setUpZope(self, app, configurationContext):
         # Load ZCML
- 
+
         fiveconfigure.debug_mode = True
         import collective.contentrules.parentchild
         self.loadZCML(package=collective.contentrules.parentchild)
@@ -29,7 +27,6 @@ class ParentChild(PloneSandboxLayer):
 
         portal.invokeFactory('Folder', id='folder')
 
+
 FIXTURE = ParentChild()
 FUNCTIONAL_TESTING = FunctionalTesting(bases=(FIXTURE,), name="ParentChild:Functional")
-
-
