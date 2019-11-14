@@ -1,6 +1,7 @@
 from unittest import defaultTestLoader
+import unittest
 
-from zope.interface import implements
+from zope.interface import implementer
 from zope.component import getUtility, getMultiAdapter
 
 from zope.component.interfaces import IObjectEvent
@@ -14,25 +15,28 @@ from collective.contentrules.parentchild.child import ChildEditForm
 
 from plone.app.contentrules.rule import Rule
 
-from collective.contentrules.parentchild.tests.base import TestCase
+from collective.contentrules.parentchild.testing import FUNCTIONAL_TESTING
 
+@implementer(IObjectEvent)
 class DummyEvent(object):
-    implements(IObjectEvent)
     
     def __init__(self, obj):
         self.object = obj
 
-class TestChildCondition(TestCase):
+class TestChildCondition(unittest.TestCase):
 
-    def afterSetUp(self):
-        self.setRoles(('Manager',))
+    layer = FUNCTIONAL_TESTING
+
+    def setUp(self):
+        self.portal = self.layer['portal']
+        self.folder = self.portal.folder
 
     def testRegistered(self): 
         element = getUtility(IRuleCondition, name='collective.contentrules.parentchild.Child')
-        self.assertEquals('collective.contentrules.parentchild.Child', element.addview)
-        self.assertEquals('edit', element.editview)
-        self.assertEquals(None, element.for_)
-        self.assertEquals(IObjectEvent, element.event)
+        self.assertEqual('collective.contentrules.parentchild.Child', element.addview)
+        self.assertEqual('edit', element.editview)
+        self.assertEqual(None, element.for_)
+        self.assertEqual(IObjectEvent, element.event)
     
     def testInvokeAddView(self): 
         element = getUtility(IRuleCondition, name='collective.contentrules.parentchild.Child')
@@ -41,27 +45,29 @@ class TestChildCondition(TestCase):
         rule = self.portal.restrictedTraverse('++rule++foo')
         
         adding = getMultiAdapter((rule, self.portal.REQUEST), name='+condition')
-        addview = getMultiAdapter((adding, self.portal.REQUEST), name=element.addview)
+        addview = getMultiAdapter((adding, self.portal.REQUEST), name=element.addview).form_instance
         
-        addview.createAndAdd(data={'check_types' : set(['Folder', 'Image']),
+        addview.updateFields()
+        condition = addview.create(data={'check_types' : set(['Folder', 'Image']),
                                    'wf_states': set(['published']),
                                    'recursive': True,
                                    'min_count': 2,
                                    'max_count': 3})
+        addview.add(condition)
         
         e = rule.conditions[0]
-        self.failUnless(isinstance(e, ChildCondition))
-        self.assertEquals(set(['Folder', 'Image']), e.check_types)
-        self.assertEquals(set(['published']), e.wf_states)
-        self.assertEquals(True, e.recursive)
-        self.assertEquals(2, e.min_count)
-        self.assertEquals(3, e.max_count)
+        self.assertTrue(isinstance(e, ChildCondition))
+        self.assertEqual(set(['Folder', 'Image']), e.check_types)
+        self.assertEqual(set(['published']), e.wf_states)
+        self.assertEqual(True, e.recursive)
+        self.assertEqual(2, e.min_count)
+        self.assertEqual(3, e.max_count)
     
     def testInvokeEditView(self): 
         element = getUtility(IRuleCondition, name='collective.contentrules.parentchild.Child')
         e = ChildCondition()
-        editview = getMultiAdapter((e, self.folder.REQUEST), name=element.editview)
-        self.failUnless(isinstance(editview, ChildEditForm))
+        editview = getMultiAdapter((e, self.folder.REQUEST), name=element.editview).form_instance
+        self.assertTrue(isinstance(editview, ChildEditForm))
 
     def testExecuteType(self): 
         e = ChildCondition()
@@ -72,17 +78,17 @@ class TestChildCondition(TestCase):
         e.max_count = None
         
         ex = getMultiAdapter((self.portal, e, DummyEvent(self.folder)), IExecutable)
-        self.assertEquals(False, ex())
+        self.assertEqual(False, ex())
         
         self.folder.invokeFactory('Document', 'd1')
         
         ex = getMultiAdapter((self.portal, e, DummyEvent(self.folder)), IExecutable)
-        self.assertEquals(True, ex())
+        self.assertEqual(True, ex())
         
         self.folder.invokeFactory('Document', 'd2')
         
         ex = getMultiAdapter((self.portal, e, DummyEvent(self.folder)), IExecutable)
-        self.assertEquals(True, ex())
+        self.assertEqual(True, ex())
     
     def testExecuteWorkflow(self):
         e = ChildCondition()
@@ -93,18 +99,18 @@ class TestChildCondition(TestCase):
         e.max_count = None
         
         ex = getMultiAdapter((self.portal, e, DummyEvent(self.folder)), IExecutable)
-        self.assertEquals(False, ex())
+        self.assertEqual(False, ex())
         
         self.folder.invokeFactory('Document', 'd1')
         
         ex = getMultiAdapter((self.portal, e, DummyEvent(self.folder)), IExecutable)
-        self.assertEquals(False, ex())
+        self.assertEqual(False, ex())
         
         self.folder.invokeFactory('Document', 'd2')
         self.portal.portal_workflow.doActionFor(self.folder.d2, 'publish')
         
         ex = getMultiAdapter((self.portal, e, DummyEvent(self.folder)), IExecutable)
-        self.assertEquals(True, ex())
+        self.assertEqual(True, ex())
 
     def testExecuteCountMin(self):
         e = ChildCondition()
@@ -115,17 +121,17 @@ class TestChildCondition(TestCase):
         e.max_count = None
         
         ex = getMultiAdapter((self.portal, e, DummyEvent(self.folder)), IExecutable)
-        self.assertEquals(False, ex())
+        self.assertEqual(False, ex())
         
         self.folder.invokeFactory('Document', 'd1')
         
         ex = getMultiAdapter((self.portal, e, DummyEvent(self.folder)), IExecutable)
-        self.assertEquals(False, ex())
+        self.assertEqual(False, ex())
         
         self.folder.invokeFactory('Document', 'd2')
         
         ex = getMultiAdapter((self.portal, e, DummyEvent(self.folder)), IExecutable)
-        self.assertEquals(True, ex())
+        self.assertEqual(True, ex())
 
     def testExecuteCountMinMax(self):
         e = ChildCondition()
@@ -136,27 +142,27 @@ class TestChildCondition(TestCase):
         e.max_count = 3
         
         ex = getMultiAdapter((self.portal, e, DummyEvent(self.folder)), IExecutable)
-        self.assertEquals(False, ex())
+        self.assertEqual(False, ex())
         
         self.folder.invokeFactory('Document', 'd1')
         
         ex = getMultiAdapter((self.portal, e, DummyEvent(self.folder)), IExecutable)
-        self.assertEquals(False, ex())
+        self.assertEqual(False, ex())
         
         self.folder.invokeFactory('Document', 'd2')
         
         ex = getMultiAdapter((self.portal, e, DummyEvent(self.folder)), IExecutable)
-        self.assertEquals(True, ex())
+        self.assertEqual(True, ex())
         
         self.folder.invokeFactory('Document', 'd3')
         
         ex = getMultiAdapter((self.portal, e, DummyEvent(self.folder)), IExecutable)
-        self.assertEquals(True, ex())
+        self.assertEqual(True, ex())
         
         self.folder.invokeFactory('Document', 'd4')
         
         ex = getMultiAdapter((self.portal, e, DummyEvent(self.folder)), IExecutable)
-        self.assertEquals(False, ex())
+        self.assertEqual(False, ex())
 
     def testExecuteRecursive(self):
         e = ChildCondition()
@@ -167,17 +173,17 @@ class TestChildCondition(TestCase):
         e.max_count = None
         
         ex = getMultiAdapter((self.portal, e, DummyEvent(self.folder)), IExecutable)
-        self.assertEquals(False, ex())
+        self.assertEqual(False, ex())
         
         self.folder.invokeFactory('Folder', 'f1')
         
         ex = getMultiAdapter((self.portal, e, DummyEvent(self.folder)), IExecutable)
-        self.assertEquals(False, ex())
+        self.assertEqual(False, ex())
         
         self.folder.f1.invokeFactory('Document', 'd1')
         
         ex = getMultiAdapter((self.portal, e, DummyEvent(self.folder)), IExecutable)
-        self.assertEquals(True, ex())
+        self.assertEqual(True, ex())
 
     def testExecuteRecursiveDoesNotCountSelf(self):
         e = ChildCondition()
@@ -190,12 +196,12 @@ class TestChildCondition(TestCase):
         self.folder.invokeFactory('Folder', 'f1')
         
         ex = getMultiAdapter((self.portal, e, DummyEvent(self.folder.f1)), IExecutable)
-        self.assertEquals(False, ex())
+        self.assertEqual(False, ex())
         
         self.folder.f1.invokeFactory('Folder', 'f11')
         
         ex = getMultiAdapter((self.portal, e, DummyEvent(self.folder.f1)), IExecutable)
-        self.assertEquals(True, ex())
+        self.assertEqual(True, ex())
 
     def testExecuteComplex(self):
         e = ChildCondition()
@@ -208,22 +214,22 @@ class TestChildCondition(TestCase):
         self.folder.invokeFactory('Folder', 'f1')
         
         ex = getMultiAdapter((self.portal, e, DummyEvent(self.folder)), IExecutable)
-        self.assertEquals(False, ex())
+        self.assertEqual(False, ex())
         
         self.folder.f1.invokeFactory('Document', 'd1')
         
         ex = getMultiAdapter((self.portal, e, DummyEvent(self.folder)), IExecutable)
-        self.assertEquals(False, ex())
+        self.assertEqual(False, ex())
         
         self.portal.portal_workflow.doActionFor(self.folder.f1, 'publish')
         
         ex = getMultiAdapter((self.portal, e, DummyEvent(self.folder)), IExecutable)
-        self.assertEquals(False, ex())
+        self.assertEqual(False, ex())
         
         self.portal.portal_workflow.doActionFor(self.folder.f1.d1, 'publish')
         
         ex = getMultiAdapter((self.portal, e, DummyEvent(self.folder)), IExecutable)
-        self.assertEquals(True, ex())
+        self.assertEqual(True, ex())
 
 def test_suite():
     return defaultTestLoader.loadTestsFromName(__name__)

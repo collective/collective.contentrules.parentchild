@@ -1,14 +1,15 @@
 from OFS.SimpleItem import SimpleItem
 
-from zope.interface import implements, Interface
+from zope.interface import implementer, Interface
 from zope.component import adapts
-from zope.formlib import form
 from zope import schema
 from zope.i18nmessageid import MessageFactory
+from z3c.form.form import applyChanges
 
 from plone.contentrules.rule.interfaces import IExecutable, IRuleElementData
 
 from plone.app.contentrules.browser.formhelper import AddForm, EditForm 
+from plone.app.contentrules.browser.formhelper import ContentRuleFormWrapper
 
 from Acquisition import aq_parent, aq_chain
 from Products.CMFCore.utils import getToolByName
@@ -38,10 +39,10 @@ class IAutoTransitionAction(Interface):
                              value_type=schema.Choice(title=_(u"Type"),
                                                        vocabulary="plone.app.vocabularies.PortalTypes"))
          
+@implementer(IAutoTransitionAction, IRuleElementData)
 class AutoTransitionAction(SimpleItem):
     """The actual persistent implementation of the action element.
     """
-    implements(IAutoTransitionAction, IRuleElementData)
     
     parent = True
     check_types = None
@@ -55,10 +56,10 @@ class AutoTransitionAction(SimpleItem):
         else:
             return _(u"Execute automatic transitions on a parent object")
     
+@implementer(IExecutable)
 class AutoTransitionActionExecutor(object):
     """The executor for this action.
     """
-    implements(IExecutable)
     adapts(Interface, IAutoTransitionAction, Interface)
          
     def __init__(self, context, element, event):
@@ -114,20 +115,28 @@ class AutoTransitionActionExecutor(object):
 class AutoTransitionAddForm(AddForm):
     """An add form for workflow actions.
     """
-    form_fields = form.FormFields(IAutoTransitionAction)
+    schema = IAutoTransitionAction
     label = _(u"Add Auto Transition Action")
     description = _(u"This action triggers a workflow transition on a parent object.")
     form_name = _(u"Configure element")
+    Type = AutoTransitionAction
     
     def create(self, data):
-        a = AutoTransitionAction()
-        form.applyChanges(a, self.form_fields, data)
+        a = self.Type()
+        applyChanges(self, a, data)
         return a
 
 class AutoTransitionEditForm(EditForm):
     """An edit form for workflow rule actions.
     """
-    form_fields = form.FormFields(IAutoTransitionAction)
+    schema = IAutoTransitionAction
     label = _(u"Edit PArent Transition Action")
     description = _(u"This action triggers a workflow transition on a parent object.")
     form_name = _(u"Configure element")
+
+
+class AutoTransitionAddFormView(ContentRuleFormWrapper):
+    form = AutoTransitionAddForm
+
+class AutoTransitionEditFormView(ContentRuleFormWrapper):
+    form = AutoTransitionEditForm

@@ -1,6 +1,6 @@
 from unittest import defaultTestLoader
 
-from zope.interface import implements
+from zope.interface import implementer
 from zope.component import getUtility, getMultiAdapter
 
 from plone.contentrules.engine.interfaces import IRuleStorage
@@ -16,27 +16,31 @@ from zope.component.interfaces import IObjectEvent
 
 from Products.CMFPlone.utils import _createObjectByType
 
-from collective.contentrules.parentchild.tests.base import TestCase
+from collective.contentrules.parentchild.testing import FUNCTIONAL_TESTING
+import unittest
 
-class DummyEvent(object):
-    implements(IObjectEvent)
+@implementer(IObjectEvent)
+class DummyEvent(object):  
     
     def __init__(self, object):
         self.object = object
 
-class TestParentTransitionAction(TestCase):
+class TestParentTransitionAction(unittest.TestCase):
 
-    def afterSetUp(self):
-        self.setRoles(('Manager',))
+    layer = FUNCTIONAL_TESTING
+
+    def setUp(self):
+        self.portal = self.layer['portal']
+        self.folder = self.portal.folder
         self.folder.invokeFactory('Folder', 'f1')
         self.folder.f1.invokeFactory('Document', 'd1')
 
     def testRegistered(self): 
         element = getUtility(IRuleAction, name='collective.contentrules.parentchild.ParentTransition')
-        self.assertEquals('collective.contentrules.parentchild.ParentTransition', element.addview)
-        self.assertEquals('edit', element.editview)
-        self.assertEquals(None, element.for_)
-        self.assertEquals(IObjectEvent, element.event)
+        self.assertEqual('collective.contentrules.parentchild.ParentTransition', element.addview)
+        self.assertEqual('edit', element.editview)
+        self.assertEqual(None, element.for_)
+        self.assertEqual(IObjectEvent, element.event)
     
     def testInvokeAddView(self): 
         element = getUtility(IRuleAction, name='collective.contentrules.parentchild.ParentTransition')
@@ -45,20 +49,21 @@ class TestParentTransitionAction(TestCase):
         rule = self.portal.restrictedTraverse('++rule++foo')
         
         adding = getMultiAdapter((rule, self.portal.REQUEST), name='+action')
-        addview = getMultiAdapter((adding, self.portal.REQUEST), name=element.addview)
+        addview = getMultiAdapter((adding, self.portal.REQUEST), name=element.addview).form_instance
         
-        addview.createAndAdd(data={'transition' : 'publish', 'check_types': set(['Document'])})
+        addview.updateFields()
+        addview.add(addview.create(data={'transition' : 'publish', 'check_types': set(['Document'])}))
         
         e = rule.actions[0]
-        self.failUnless(isinstance(e, ParentTransitionAction))
-        self.assertEquals('publish', e.transition)
-        self.assertEquals(set(['Document']), e.check_types)
+        self.assertTrue(isinstance(e, ParentTransitionAction))
+        self.assertEqual('publish', e.transition)
+        self.assertEqual(set(['Document']), e.check_types)
     
     def testInvokeEditView(self): 
         element = getUtility(IRuleAction, name='collective.contentrules.parentchild.ParentTransition')
         e = ParentTransitionAction()
-        editview = getMultiAdapter((e, self.folder.REQUEST), name=element.editview)
-        self.failUnless(isinstance(editview, ParentTransitionEditForm))
+        editview = getMultiAdapter((e, self.folder.REQUEST), name=element.editview).form_instance
+        self.assertTrue(isinstance(editview, ParentTransitionEditForm))
 
     def testExecute(self): 
         e = ParentTransitionAction()
@@ -66,9 +71,9 @@ class TestParentTransitionAction(TestCase):
         e.check_types = None
         
         ex = getMultiAdapter((self.folder, e, DummyEvent(self.folder.f1.d1)), IExecutable)
-        self.assertEquals(True, ex())
+        self.assertEqual(True, ex())
         
-        self.assertEquals('published', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
+        self.assertEqual('published', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
         
     def testExecuteWithError(self): 
         e = ParentTransitionAction()
@@ -78,9 +83,9 @@ class TestParentTransitionAction(TestCase):
         old_state = self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state')
         
         ex = getMultiAdapter((self.folder, e, DummyEvent(self.folder.f1.d1)), IExecutable)
-        self.assertEquals(False, ex())
+        self.assertEqual(False, ex())
         
-        self.assertEquals(old_state, self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
+        self.assertEqual(old_state, self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
 
     def testExecuteTypeImmediateParent(self): 
         e = ParentTransitionAction()
@@ -88,9 +93,9 @@ class TestParentTransitionAction(TestCase):
         e.check_types = set(['Folder'])
         
         ex = getMultiAdapter((self.folder, e, DummyEvent(self.folder.f1.d1)), IExecutable)
-        self.assertEquals(True, ex())
+        self.assertEqual(True, ex())
         
-        self.assertEquals('published', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
+        self.assertEqual('published', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
 
     def testExecuteTypeNestedParent(self): 
         e = ParentTransitionAction()
@@ -102,11 +107,13 @@ class TestParentTransitionAction(TestCase):
         
         old_state = self.portal.portal_workflow.getInfoFor(self.folder.f1.f2, 'review_state')
         
+        self.folder.f1.f2.portal_type = 'Not Folder'
         ex = getMultiAdapter((self.folder, e, DummyEvent(self.folder.f1.f2.d1)), IExecutable)
-        self.assertEquals(True, ex())
+        self.assertEqual(True, ex())
         
-        self.assertEquals('published', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
-        self.assertEquals(old_state, self.portal.portal_workflow.getInfoFor(self.folder.f1.f2, 'review_state'))
+        self.assertEqual('published', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
+        self.folder.f1.f2.portal_type = 'Folder'
+        self.assertEqual(old_state, self.portal.portal_workflow.getInfoFor(self.folder.f1.f2, 'review_state'))
     
 def test_suite():
     return defaultTestLoader.loadTestsFromName(__name__)

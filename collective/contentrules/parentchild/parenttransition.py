@@ -1,16 +1,19 @@
 from OFS.SimpleItem import SimpleItem
 
-from zope.interface import implements, Interface
+from zope.interface import implementer, Interface
 from zope.component import adapts
-from zope.formlib import form
 from zope import schema
 from zope.i18nmessageid import MessageFactory
+from z3c.form.form import applyChanges
 
 from plone.contentrules.rule.interfaces import IExecutable, IRuleElementData
 
 from plone.app.contentrules.browser.formhelper import AddForm, EditForm 
+from plone.app.contentrules.browser.formhelper import ContentRuleFormWrapper
 
 from Acquisition import aq_parent, aq_chain
+from Acquisition import aq_parent, aq_inner, aq_base
+from Acquisition.interfaces import IAcquirer
 from ZODB.POSException import ConflictError
 from Products.CMFCore.utils import getToolByName
 
@@ -37,10 +40,10 @@ class IParentTransitionAction(Interface):
                               value_type=schema.Choice(title=_(u"Type"),
                                                        vocabulary="plone.app.vocabularies.PortalTypes"))
          
+@implementer(IParentTransitionAction, IRuleElementData)
 class ParentTransitionAction(SimpleItem):
     """The actual persistent implementation of the action element.
     """
-    implements(IParentTransitionAction, IRuleElementData)
     
     transition = ''
     check_types = None
@@ -51,10 +54,11 @@ class ParentTransitionAction(SimpleItem):
     def summary(self):
         return _(u"Execute transition ${transition} on parent", mapping=dict(transition=self.transition))
     
+@implementer(IExecutable)    
 class ParentTransitionActionExecutor(object):
     """The executor for this action.
     """
-    implements(IExecutable)
+    
     adapts(Interface, IParentTransitionAction, Interface)
          
     def __init__(self, context, element, event):
@@ -80,9 +84,9 @@ class ParentTransitionActionExecutor(object):
         
         try:
             portal_workflow.doActionFor(obj, self.element.transition)
-        except ConflictError, e:
+        except ConflictError as e:
             raise e
-        except Exception, e:
+        except Exception as e:
             self.error(obj, str(e))
             return False
         
@@ -99,20 +103,32 @@ class ParentTransitionActionExecutor(object):
 class ParentTransitionAddForm(AddForm):
     """An add form for workflow actions.
     """
-    form_fields = form.FormFields(IParentTransitionAction)
+    schema = IParentTransitionAction
     label = _(u"Add Parent Transition Action")
     description = _(u"This action triggers a workflow transition on a parent object.")
     form_name = _(u"Configure element")
+    Type = ParentTransitionAction
     
     def create(self, data):
-        a = ParentTransitionAction()
-        form.applyChanges(a, self.form_fields, data)
-        return a
+        obj = self.Type()
+        container = aq_inner(self.context)
+
+        if IAcquirer.providedBy(obj):
+            obj = obj.__of__(container)
+        applyChanges(self, obj, data)
+        obj = aq_base(obj)
+        return obj
 
 class ParentTransitionEditForm(EditForm):
     """An edit form for workflow rule actions.
     """
-    form_fields = form.FormFields(IParentTransitionAction)
+    schema = IParentTransitionAction
     label = _(u"Edit PArent Transition Action")
     description = _(u"This action triggers a workflow transition on a parent object.")
     form_name = _(u"Configure element")
+
+class ParentTransitionAddFormView(ContentRuleFormWrapper):
+    form = ParentTransitionAddForm
+
+class ParentTransitionEditFormView(ContentRuleFormWrapper):
+    form = ParentTransitionEditForm
