@@ -1,7 +1,7 @@
 from OFS.SimpleItem import SimpleItem
 
-from zope.interface import implements, Interface
-from zope.component import adapts
+from zope.interface import implementer, Interface
+from zope.component import adapter
 from zope.component import queryUtility, getMultiAdapter
 from z3c.form.form import applyChanges
 
@@ -30,7 +30,7 @@ from zope.component.hooks import getSite
 _ = MessageFactory('collective.contentrules.parentchild')
 
 @provider(IContextSourceBinder)
-def action_sources(context):
+def rule_sources(context):
     terms = [SimpleVocabulary.createTerm('__this__','__this__', 'This Rule: (excluding this action)')]
     storage = queryUtility(IRuleStorage)
     for rule in storage.values():
@@ -46,10 +46,10 @@ class IQuerySplitter(Interface):
     """
 
 
-    action_source = schema.Choice(
+    rule = schema.Choice(
         title=_(u'Rule'),
         description=_(u'For all results of the query fire this rule'),
-        source=action_sources,
+        source=rule_sources,
         default='__this__'
     )
 
@@ -69,29 +69,29 @@ class IQuerySplitter(Interface):
 def query2str(query):
     return ', '.join([' '.join([c['i'],c['o'].split('.').pop(),c['v']]) for c in query])
 
+@implementer(IQuerySplitter, IRuleElementData)
 class QuerySplitter(SimpleItem):
     """The actual persistent implementation of the query splitter.
     """
-    implements(IQuerySplitter, IRuleElementData)
     
     query = {}
 
-    action_source = None
+    rule = None
     
     element = "collective.contentrules.parentchild.QuerySplitter"
     
     @property
     def summary(self):
         portal = getSite()
-        rule = self.action_source if self.action_source != '__this__' else 'this'
+        rule = self.rule if self.rule != '__this__' else 'this'
         msgid = _(u'Execute ${rule} rule on "${query}" instead', mapping=dict(rule=rule, query=query2str(self.query)))
         return portal.translate(msgid)
 
+@implementer(IExecutable)
+@adapter(Interface, IQuerySplitter, Interface)
 class QuerySplitterExecutor(object):
     """The executor for this condition.
     """
-    implements(IExecutable)
-    adapts(Interface, IQuerySplitter, Interface)
          
     def __init__(self, context, element, event):
         self.context = context
@@ -103,7 +103,7 @@ class QuerySplitterExecutor(object):
         storage = queryUtility(IRuleStorage)
         remaining = None
         # TODO: this could result in loops.
-        if self.element.action_source == '__this__':
+        if self.element.rule == '__this__':
             # iterate over all actions in all rules to find this one
 
             #rule = [rule for rule in storage.values() if any([a for a in rule.actions if a == self.element])].pop()
@@ -116,7 +116,7 @@ class QuerySplitterExecutor(object):
                 if remaining is not None:
                     break
         else:
-            rule = storage.get(self.element.action_source, None)
+            rule = storage.get(self.element.rule, None)
             if rule is not None:
                 # rule is Executable so this will result in conditions being checked too. Ignores event though
                 remaining = [rule]

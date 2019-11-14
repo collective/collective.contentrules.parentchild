@@ -1,7 +1,7 @@
 from OFS.SimpleItem import SimpleItem
 
 from zope.interface import implementer, Interface
-from zope.component import adapts
+from zope.component import adapter
 from zope import schema
 from zope.i18nmessageid import MessageFactory
 from z3c.form.form import applyChanges
@@ -55,11 +55,10 @@ class ParentTransitionAction(SimpleItem):
         return _(u"Execute transition ${transition} on parent", mapping=dict(transition=self.transition))
     
 @implementer(IExecutable)    
+@adapter(Interface, IParentTransitionAction, Interface)
 class ParentTransitionActionExecutor(object):
     """The executor for this action.
-    """
-    
-    adapts(Interface, IParentTransitionAction, Interface)
+    """  
          
     def __init__(self, context, element, event):
         self.context = context

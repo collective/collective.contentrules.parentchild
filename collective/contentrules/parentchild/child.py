@@ -1,7 +1,7 @@
 from OFS.SimpleItem import SimpleItem
 
 from zope.interface import implementer, Interface
-from zope.component import adapts
+from zope.component import adapter
 from zope import schema
 from zope.component.hooks import getSite
 from zope.i18nmessageid import MessageFactory
@@ -81,10 +81,10 @@ class ChildCondition(SimpleItem):
                    mapping=dict(names=", ".join(types), states=','.join(states)))
 
 @implementer(IExecutable)
+@adapter(Interface, IChildCondition, Interface)
 class ChildConditionExecutor(object):
     """The executor for this condition.
     """
-    adapts(Interface, IChildCondition, Interface)
          
     def __init__(self, context, element, event):
         self.context = context

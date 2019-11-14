@@ -1,7 +1,7 @@
 from OFS.SimpleItem import SimpleItem
 
 from zope.interface import implementer, Interface
-from zope.component import adapts
+from zope.component import adapter
 from zope import schema
 from zope.i18nmessageid import MessageFactory
 from z3c.form.form import applyChanges
@@ -57,10 +57,10 @@ class AutoTransitionAction(SimpleItem):
             return _(u"Execute automatic transitions on a parent object")
     
 @implementer(IExecutable)
+@adapter(Interface, IAutoTransitionAction, Interface)
 class AutoTransitionActionExecutor(object):
     """The executor for this action.
     """
-    adapts(Interface, IAutoTransitionAction, Interface)
          
     def __init__(self, context, element, event):
         self.context = context
