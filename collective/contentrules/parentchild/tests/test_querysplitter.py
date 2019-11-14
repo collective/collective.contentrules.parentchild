@@ -1,7 +1,7 @@
 from unittest import defaultTestLoader
 import unittest
 
-from zope.interface import implements
+from zope.interface import implementer
 from zope.component import getUtility, getMultiAdapter
 
 from plone.contentrules.engine.interfaces import IRuleStorage
@@ -21,8 +21,8 @@ from Products.DCWorkflow.Transitions import TRIGGER_AUTOMATIC
 from Products.CMFPlone.utils import _createObjectByType
 
 
+@implementer(IObjectEvent)
 class DummyEvent(object):
-    implements(IObjectEvent)
 
     def __init__(self, object):
         self.object = object
