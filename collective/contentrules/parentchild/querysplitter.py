@@ -27,13 +27,12 @@ _ = MessageFactory('collective.contentrules.parentchild')
 
 @provider(IContextSourceBinder)
 def rule_sources(context):
-    terms = [SimpleVocabulary.createTerm('__this__', '__this__', 'This Rule: (excluding this action)')]
+    terms = [SimpleVocabulary.createTerm('__this__', '__this__', 'The rest of this rule')]
     storage = queryUtility(IRuleStorage)
     for rule in storage.values():
         if rule == context.__parent__:
             continue
         terms.append(SimpleVocabulary.createTerm(rule.__name__, rule.__name__, rule.title))
-    # TODO: put in the events too?
 
     return SimpleVocabulary(terms)
 
@@ -52,7 +51,7 @@ class IQuerySplitter(Interface):
     query = schema.List(
         title=_(u'Query'),
         description=_(
-            u'Query to find related items to fire a rule against. For example all children of the item that fired the event'),
+            u'Query to find related items to fire a rule against. For example all children of the event item'),
         value_type=schema.Dict(value_type=schema.Field(),
                                key_type=schema.TextLine()),
         default=[{"i": "path", "o": "plone.app.querystring.operation.string.relativePath", "v": ".::1"}],

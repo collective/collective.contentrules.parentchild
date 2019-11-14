@@ -7,6 +7,7 @@ from zope.component import getUtility, getMultiAdapter
 from plone.contentrules.engine.interfaces import IRuleStorage
 from plone.contentrules.rule.interfaces import IRuleCondition
 from plone.contentrules.rule.interfaces import IExecutable
+from plone.app.contentrules.conditions.portaltype import PortalTypeCondition
 
 from collective.contentrules.parentchild.querysplitter import QuerySplitter
 from collective.contentrules.parentchild.querysplitter import QuerySplitterEditForm
@@ -54,7 +55,7 @@ class TestQuerySplitter(unittest.TestCase):
 
         action = AutoTransitionAction()
         action.parent = False
-        addview.add(action)
+        rule.actions.append(action)
         self._autopublish()
         return rule
 
@@ -127,6 +128,49 @@ class TestQuerySplitter(unittest.TestCase):
         self.assertEqual('published', self.portal.portal_workflow.getInfoFor(self.folder.f1.d1, 'review_state'))
         self.assertEqual('published', self.portal.portal_workflow.getInfoFor(self.folder.f1.f2, 'review_state'))
         self.assertEqual('published', self.portal.portal_workflow.getInfoFor(self.folder.f1.f2.d2, 'review_state'))
+
+    def testExecuteFollowingConditions(self):
+        _createObjectByType('Folder', self.folder.f1, id='f2')
+        self.folder.f1.f2.invokeFactory('Document', 'd2')
+
+        rule = self._createRule()
+        e = rule.conditions[0]
+        e.rule = '__this__'
+        e.query = [{"i": "path", "o": "plone.app.querystring.operation.string.relativePath", "v": ".::-1"}]
+        condition = PortalTypeCondition()
+        condition.check_types = ["Document"]
+        rule.conditions.append(condition)
+
+        ex = getMultiAdapter((self.folder, rule, DummyEvent(self.folder.f1)), IExecutable)
+        # we always get False since it won't execute the rule on the context
+        self.assertEqual(False, ex())
+
+        self.assertEqual('private', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
+        self.assertEqual('published', self.portal.portal_workflow.getInfoFor(self.folder.f1.d1, 'review_state'))
+        self.assertEqual('private', self.portal.portal_workflow.getInfoFor(self.folder.f1.f2, 'review_state'))
+        self.assertEqual('published', self.portal.portal_workflow.getInfoFor(self.folder.f1.f2.d2, 'review_state'))
+
+    def testExecuteAnotherRule(self):
+
+        rule = self._createRule()
+        e = rule.conditions[0]
+        e.rule = 'rule2'
+        e.query = [{"i": "path", "o": "plone.app.querystring.operation.string.relativePath", "v": ".::-1"}]
+        rule.actions.pop()
+
+        storage = getUtility(IRuleStorage)
+        storage[u'rule2'] = Rule()
+        rule2 = self.portal.restrictedTraverse('++rule++rule2')
+        action = AutoTransitionAction()
+        action.parent = False
+        rule2.actions.append(action)
+
+        ex = getMultiAdapter((self.folder, rule, DummyEvent(self.folder.f1)), IExecutable)
+        # we always get False since it won't execute the rule on the context
+        self.assertEqual(False, ex())
+
+        self.assertEqual('published', self.portal.portal_workflow.getInfoFor(self.folder.f1, 'review_state'))
+        self.assertEqual('published', self.portal.portal_workflow.getInfoFor(self.folder.f1.d1, 'review_state'))
 
     def testSummary(self):
         _createObjectByType('Folder', self.folder.f1, id='f2')
