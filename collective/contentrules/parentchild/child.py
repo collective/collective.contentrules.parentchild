@@ -1,13 +1,14 @@
 from OFS.SimpleItem import SimpleItem
 
-from zope.interface import implements, Interface
+from zope.interface import implementer, Interface
 from zope.component import adapts
-from zope.formlib import form
 from zope import schema
-from zope.app.component.hooks import getSite
+from zope.component.hooks import getSite
 from zope.i18nmessageid import MessageFactory
+from z3c.form.form import applyChanges
 
 from plone.contentrules.rule.interfaces import IExecutable, IRuleElementData
+from plone.app.contentrules.browser.formhelper import ContentRuleFormWrapper
 
 from plone.app.contentrules.browser.formhelper import AddForm, EditForm 
 
@@ -48,12 +49,12 @@ class IChildCondition(Interface):
                                min=1,
                                required=False)
          
+@implementer(IChildCondition, IRuleElementData)
 class ChildCondition(SimpleItem):
     """The actual persistent implementation of the portal type condition element.
     
     Note that we must mix in SimpleItem to keep Zope 2 security happy.
     """
-    implements(IChildCondition, IRuleElementData)
     
     check_types = None
     wf_states = None
@@ -79,10 +80,10 @@ class ChildCondition(SimpleItem):
         return _(u"Child exists of type ${names} and/or state ${states}",
                    mapping=dict(names=", ".join(types), states=','.join(states)))
 
+@implementer(IExecutable)
 class ChildConditionExecutor(object):
     """The executor for this condition.
     """
-    implements(IExecutable)
     adapts(Interface, IChildCondition, Interface)
          
     def __init__(self, context, element, event):
@@ -113,7 +114,7 @@ class ChildConditionExecutor(object):
             # without the depth parameter, we could have obtained the source object itself
             results = filter(lambda x: x.getPath() != obj_path, results)
         
-        result_count = len(results)
+        result_count = len(list(results))
         if result_count < self.element.min_count:
             return False
         
@@ -125,20 +126,27 @@ class ChildConditionExecutor(object):
 class ChildAddForm(AddForm):
     """An add form for portal type conditions.
     """
-    form_fields = form.FormFields(IChildCondition)
+    schema = IChildCondition
     label = _(u"Add Content Type Condition")
     description = _(u"A portal type condition makes the rule apply only to certain content types.")
     form_name = _(u"Configure element")
     
     def create(self, data):
         c = ChildCondition()
-        form.applyChanges(c, self.form_fields, data)
+        applyChanges(self, c, data)
         return c
 
 class ChildEditForm(EditForm):
     """An edit form for portal type conditions
     """
-    form_fields = form.FormFields(IChildCondition)
+    schema = IChildCondition
     label = _(u"Edit Content Type Condition")
     description = _(u"A portal type condition makes the rule apply only to certain content types.")
     form_name = _(u"Configure element")
+
+
+class ChildAddFormView(ContentRuleFormWrapper):
+    form = ChildAddForm
+
+class ChildEditFormView(ContentRuleFormWrapper):
+    form = ChildEditForm
