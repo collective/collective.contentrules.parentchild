@@ -1,5 +1,6 @@
 from unittest import defaultTestLoader
 import unittest
+from cStringIO import StringIO
 
 from zope.interface import implementer
 from zope.component import getUtility, getMultiAdapter
@@ -8,6 +9,7 @@ from plone.contentrules.engine.interfaces import IRuleStorage
 from plone.contentrules.rule.interfaces import IRuleCondition
 from plone.contentrules.rule.interfaces import IExecutable
 from plone.app.contentrules.conditions.portaltype import PortalTypeCondition
+from Products.GenericSetup.tests.common import TarballTester
 
 from collective.contentrules.parentchild.querysplitter import QuerySplitter
 from collective.contentrules.parentchild.querysplitter import QuerySplitterEditForm
@@ -29,7 +31,7 @@ class DummyEvent(object):
         self.object = object
 
 
-class TestQuerySplitter(unittest.TestCase):
+class TestQuerySplitter(unittest.TestCase, TarballTester):
 
     layer = FUNCTIONAL_TESTING
 
@@ -44,6 +46,7 @@ class TestQuerySplitter(unittest.TestCase):
         storage = getUtility(IRuleStorage)
         storage[u'foo'] = Rule()
         rule = self.portal.restrictedTraverse('++rule++foo')
+        rule.event = "zope.lifecycleevent.ObjectAddedEvent"
 
         adding = getMultiAdapter((rule, self.portal.REQUEST), name='+condition')
         addview = getMultiAdapter((adding, self.portal.REQUEST), name=element.addview).form_instance
@@ -57,6 +60,7 @@ class TestQuerySplitter(unittest.TestCase):
         action.parent = False
         rule.actions.append(action)
         self._autopublish()
+
         return rule
 
     def _autopublish(self):
@@ -180,6 +184,51 @@ class TestQuerySplitter(unittest.TestCase):
         e.rule = '__this__'
         e.query = [{"i": "path", "o": "plone.app.querystring.operation.string.relativePath", "v": "..::-1"}]
         self.assertEqual('Execute this rule on "path relativePath ..::-1" instead', e.summary)
+
+    def testExport(self):
+        rule = self._createRule()
+        e = rule.conditions[0]
+        e.rule = '__this__'
+        e.query = [{"i": "path", "o": "plone.app.querystring.operation.string.relativePath", "v": ".::1"}]
+
+        setup_tool = self.portal.portal_setup
+        result = setup_tool.runExportStep('contentrules')
+        fileish = StringIO(result['tarball'])
+
+        xml = """
+<?xml version="1.0" ?><contentrules>
+<rule cascading="False" description="" enabled="True" event="zope.lifecycleevent.ObjectAddedEvent" name="foo" stop-after="False" title="">
+<conditions>
+<condition type="collective.contentrules.parentchild.QuerySplitter">
+<property name="query">
+<element>{'i': 'path', 'o': 'plone.app.querystring.operation.string.relativePath', 'v': '.::1'}</element>
+</property>
+<property name="rule">__this__</property>
+</condition>
+</conditions>
+<actions>
+<action type="collective.contentrules.parentchild.AutoTransition">
+<property name="check_types"/>
+<property name="parent">False</property>
+</action>
+</actions>
+</rule>
+</contentrules>
+"""
+        self._verifyTarballEntryXML(fileish, 'contentrules.xml', xml)
+
+    def testImport(self):
+        rule = self._createRule()
+        e = rule.conditions[0]
+        e.rule = '__this__'
+        e.query = [{"i": "path", "o": "plone.app.querystring.operation.string.relativePath", "v": ".::1"}]
+
+        setup_tool = self.portal.portal_setup
+        result = setup_tool.runExportStep('contentrules')
+
+        # now reimport it
+        result = setup_tool.runAllImportStepsFromProfile(
+            None, purge_old=True, archive=result['tarball'])
 
 
 def test_suite():
