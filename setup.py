@@ -24,7 +24,7 @@ setup(name='collective.contentrules.parentchild',
       zip_safe=False,
       install_requires=[
           'setuptools',
-          'plone.app.contentrules>=4.1.3', # for import export of dicts in GS
+          'plone.app.contentrules', # Should be >=4.1.3' import export of dicts in GS, but want to allow backports
           'plone.contentrules',
       ],
       extras_require={'test': ['plone.app.testing']},
