@@ -1,6 +1,9 @@
 from unittest import defaultTestLoader
 import unittest
-from cStringIO import StringIO
+try:
+    from io import StringIO
+except ImportError:
+    from cStringIO import StringIO  # py2.7
 
 from zope.interface import implementer
 from zope.component import getUtility, getMultiAdapter
