@@ -4,7 +4,7 @@ dist: trusty
 addons:
   apt:
     packages:
-      - chrome
+      - google-chrome-stable
 matrix:
   include:
     - python: "2.7"
