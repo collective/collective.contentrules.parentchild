@@ -35,6 +35,8 @@ class TestQuerySplitter(unittest.TestCase, TarballTester):
 
     layer = FUNCTIONAL_TESTING
 
+    maxDiff = None
+
     def setUp(self):
         self.portal = self.layer['portal']
         self.folder = self.portal.folder
@@ -201,7 +203,11 @@ class TestQuerySplitter(unittest.TestCase, TarballTester):
 <conditions>
 <condition type="collective.contentrules.parentchild.QuerySplitter">
 <property name="query">
-<element>{'i': 'path', 'o': 'plone.app.querystring.operation.string.relativePath', 'v': '.::1'}</element>
+<element>
+<element key="i">path</element>
+<element key="o">plone.app.querystring.operation.string.relativePath</element>
+<element key="v">.::1</element>
+</element>
 </property>
 <property name="rule">__this__</property>
 </condition>
@@ -226,9 +232,16 @@ class TestQuerySplitter(unittest.TestCase, TarballTester):
         setup_tool = self.portal.portal_setup
         result = setup_tool.runExportStep('contentrules')
 
+        # Ensure we aren't seeing old values after import
+        e.query = []
+
         # now reimport it
         result = setup_tool.runAllImportStepsFromProfile(
             None, purge_old=True, archive=result['tarball'])
+
+        rule = getUtility(IRuleStorage)[u'foo']
+
+        self.assertEqual(rule.conditions[0].query, [{"i": "path", "o": "plone.app.querystring.operation.string.relativePath", "v": ".::1"}])
 
 
 def test_suite():
