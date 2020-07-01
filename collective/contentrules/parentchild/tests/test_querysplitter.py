@@ -1,9 +1,9 @@
 from unittest import defaultTestLoader
 import unittest
 try:
-    from io import StringIO
+    from io import BytesIO
 except ImportError:
-    from cStringIO import StringIO  # py2.7
+    from cStringIO import StringIO as BytesIO  # py2.7
 
 from zope.interface import implementer
 from zope.component import getUtility, getMultiAdapter
@@ -198,7 +198,7 @@ class TestQuerySplitter(unittest.TestCase, TarballTester):
 
         setup_tool = self.portal.portal_setup
         result = setup_tool.runExportStep('contentrules')
-        fileish = StringIO(unicode(result['tarball']))
+        fileish = BytesIO(bytes(result['tarball']))
 
         xml = """
 <?xml version="1.0" ?><contentrules>
