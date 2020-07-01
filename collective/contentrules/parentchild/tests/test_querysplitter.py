@@ -198,7 +198,7 @@ class TestQuerySplitter(unittest.TestCase, TarballTester):
 
         setup_tool = self.portal.portal_setup
         result = setup_tool.runExportStep('contentrules')
-        fileish = StringIO(result['tarball'])
+        fileish = StringIO(unicode(result['tarball']))
 
         xml = """
 <?xml version="1.0" ?><contentrules>

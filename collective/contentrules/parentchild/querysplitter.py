@@ -98,7 +98,6 @@ class QuerySplitterExecutor(object):
         self.event = event
 
     def __call__(self):
-
         storage = queryUtility(IRuleStorage)
         remaining = None
         # TODO: this could result in loops.
