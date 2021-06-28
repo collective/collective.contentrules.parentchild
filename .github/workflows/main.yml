@@ -65,38 +65,27 @@ jobs:
         run: |
             bin/test --all 
       - name: code-analysis
-        run: echo "${{ matrix.plone-version }}" | grep 5.1 || bin/code-analysis  
-      - name: Artifact Robot Test Report
-        if: failure()
-        uses: actions/upload-artifact@v1
-        with:
-          name: test_results
-          path: ./parts/test
+        run: echo "${{ matrix.plone-version }}" | grep 5.1 || bin/code-analysis
       - uses: actions/setup-python@v2
         if: failure()
         with:
-          python-version: 2.7            
-      - name: Robottest report
-        if: failure()
-        run: |
-            pip2.7 install popt || pip2.7 install --user  popt
-            grep  --include=output.xml -Rl  FAIL parts/test | xargs --no-run-if-empty -n 1 popt
-      - name: createcoverage
-        run: |
-            bin/createcoverage -t '--all'
-            bin/coverage json -i
-      - name: Coveralls
-        uses: AndreMiras/coveralls-python-action@develop
-        with:
-          parallel: true
-          flag-name: ${{ matrix.plone-version }}-${{ matrix.python-version }}     
+          python-version: 2.7
+      # - name: createcoverage
+      #   run: |
+      #       bin/createcoverage -t '--all'
+      #       bin/coverage json -i
+  #     - name: Coveralls
+  #       uses: AndreMiras/coveralls-python-action@develop
+  #       with:
+  #         parallel: true
+  #         flag-name: ${{ matrix.plone-version }}-${{ matrix.python-version }}     
 
-  coveralls_finish:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - name: Coveralls Finished
-      uses: AndreMiras/coveralls-python-action@develop
-      with:
-        parallel-finished: true
+  # coveralls_finish:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - name: Coveralls Finished
+  #     uses: AndreMiras/coveralls-python-action@develop
+  #     with:
+  #       parallel-finished: true
 
