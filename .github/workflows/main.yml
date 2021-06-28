@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches-ignore:
+      - "master"
+      - "releases/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        plone-version: 
+          - '5.0'
+          - '5.1'
+          - '5.2'
+        python-version: ['2.7']
+        include:
+          - plone-version: 5.2
+            python-version: 3.6
+          - plone-version: 5.2
+            python-version: 3.7
+          - plone-version: 5.2
+            python-version: 3.8
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y libxml2-dev libxslt-dev python-dev
+          pip install virtualenv wheel
+      - name: Cache multiple paths
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/buildout-cache
+            ~/extends
+            ~/.cache/pip
+          key: ${{ runner.os }}-buildout-${{ matrix.plone-version }}-${{ matrix.python-version }}
+          restore-keys: |
+            ${{ runner.os }}-buildout-
+      - name: setup buildout cache
+        run: |
+            mkdir -p ~/buildout-cache/{eggs,downloads}
+            mkdir ~/.buildout
+            echo "[buildout]" > ~/.buildout/default.cfg
+            echo "download-cache = ~/buildout-cache/downloads" >> ~/.buildout/default.cfg
+            echo "eggs-directory = ~/buildout-cache/eggs" >> ~/.buildout/default.cfg
+      - name: bootstrap buildout
+        run: |
+          ./bootstrap.sh test-${{ matrix.plone-version }}.x.cfg
+          ls -al
+      - name: buildout
+        run: |
+          bin/buildout -t 10 -Nc test-${{ matrix.plone-version }}.x.cfg
+          bin/pip install zest.pocompile
+          bin/pocompile src
+      - name: test
+        run: |
+            bin/test --all 
+      - name: code-analysis
+        run: echo "${{ matrix.plone-version }}" | grep 5.1 || bin/code-analysis
+      - uses: actions/setup-python@v2
+        if: failure()
+        with:
+          python-version: 2.7
+      # - name: createcoverage
+      #   run: |
+      #       bin/createcoverage -t '--all'
+      #       bin/coverage json -i
+  #     - name: Coveralls
+  #       uses: AndreMiras/coveralls-python-action@develop
+  #       with:
+  #         parallel: true
+  #         flag-name: ${{ matrix.plone-version }}-${{ matrix.python-version }}     
+
+  # coveralls_finish:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - name: Coveralls Finished
+  #     uses: AndreMiras/coveralls-python-action@develop
+  #     with:
+  #       parallel-finished: true
+
