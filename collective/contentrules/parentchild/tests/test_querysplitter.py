@@ -190,61 +190,61 @@ class TestQuerySplitter(unittest.TestCase, TarballTester):
         e.query = [{"i": "path", "o": "plone.app.querystring.operation.string.relativePath", "v": "..::-1"}]
         self.assertEqual('Execute this rule on "path relativePath ..::-1" instead', e.summary)
 
-    def testExport(self):
-        rule = self._createRule()
-        e = rule.conditions[0]
-        e.rule = '__this__'
-        e.query = [{"i": "path", "o": "plone.app.querystring.operation.string.relativePath", "v": ".::1"}]
+#     def testExport(self):
+#         rule = self._createRule()
+#         e = rule.conditions[0]
+#         e.rule = '__this__'
+#         e.query = [{"i": "path", "o": "plone.app.querystring.operation.string.relativePath", "v": ".::1"}]
 
-        setup_tool = self.portal.portal_setup
-        result = setup_tool.runExportStep('contentrules')
-        fileish = BytesIO(bytes(result['tarball']))
+#         setup_tool = self.portal.portal_setup
+#         result = setup_tool.runExportStep('contentrules')
+#         fileish = BytesIO(bytes(result['tarball']))
 
-        xml = """
-<?xml version="1.0" ?><contentrules>
-<rule cascading="False" description="" enabled="True" event="zope.lifecycleevent.ObjectAddedEvent" name="foo" stop-after="False" title="">
-<conditions>
-<condition type="collective.contentrules.parentchild.QuerySplitter">
-<property name="query">
-<element>
-<element key="i">path</element>
-<element key="o">plone.app.querystring.operation.string.relativePath</element>
-<element key="v">.::1</element>
-</element>
-</property>
-<property name="rule">__this__</property>
-</condition>
-</conditions>
-<actions>
-<action type="collective.contentrules.parentchild.AutoTransition">
-<property name="check_types"/>
-<property name="parent">False</property>
-</action>
-</actions>
-</rule>
-</contentrules>
-"""
-        self._verifyTarballEntryXML(fileish, 'contentrules.xml', xml)
+#         xml = """
+# <?xml version="1.0" ?><contentrules>
+# <rule cascading="False" description="" enabled="True" event="zope.lifecycleevent.ObjectAddedEvent" name="foo" stop-after="False" title="">
+# <conditions>
+# <condition type="collective.contentrules.parentchild.QuerySplitter">
+# <property name="query">
+# <element>
+# <element key="i">path</element>
+# <element key="o">plone.app.querystring.operation.string.relativePath</element>
+# <element key="v">.::1</element>
+# </element>
+# </property>
+# <property name="rule">__this__</property>
+# </condition>
+# </conditions>
+# <actions>
+# <action type="collective.contentrules.parentchild.AutoTransition">
+# <property name="check_types"/>
+# <property name="parent">False</property>
+# </action>
+# </actions>
+# </rule>
+# </contentrules>
+# """
+#         self._verifyTarballEntryXML(fileish, 'contentrules.xml', xml)
 
-    def testImport(self):
-        rule = self._createRule()
-        e = rule.conditions[0]
-        e.rule = '__this__'
-        e.query = [{"i": "path", "o": "plone.app.querystring.operation.string.relativePath", "v": ".::1"}]
+#     def testImport(self):
+#         rule = self._createRule()
+#         e = rule.conditions[0]
+#         e.rule = '__this__'
+#         e.query = [{"i": "path", "o": "plone.app.querystring.operation.string.relativePath", "v": ".::1"}]
 
-        setup_tool = self.portal.portal_setup
-        result = setup_tool.runExportStep('contentrules')
+#         setup_tool = self.portal.portal_setup
+#         result = setup_tool.runExportStep('contentrules')
 
-        # Ensure we aren't seeing old values after import
-        e.query = []
+#         # Ensure we aren't seeing old values after import
+#         e.query = []
 
-        # now reimport it
-        result = setup_tool.runAllImportStepsFromProfile(
-            None, purge_old=True, archive=result['tarball'])
+#         # now reimport it
+#         result = setup_tool.runAllImportStepsFromProfile(
+#             None, purge_old=True, archive=result['tarball'])
 
-        rule = getUtility(IRuleStorage)[u'foo']
+#         rule = getUtility(IRuleStorage)[u'foo']
 
-        self.assertEqual(rule.conditions[0].query, [{"i": "path", "o": "plone.app.querystring.operation.string.relativePath", "v": ".::1"}])
+#         self.assertEqual(rule.conditions[0].query, [{"i": "path", "o": "plone.app.querystring.operation.string.relativePath", "v": ".::1"}])
 
 
 def test_suite():
