@@ -96,5 +96,35 @@
         schema=".parenttransition.IParentTransitionAction"
         factory=".parenttransition.ParentTransitionAction"
         />
+        
+<!-- Query child action -->
+
+    <adapter factory=".querysplitter.QuerySplitterExecutor" />
+    
+    <browser:page 
+        for="plone.app.contentrules.browser.interfaces.IRuleConditionAdding"
+        name="collective.contentrules.parentchild.QuerySplitter"
+        class=".querysplitter.QuerySplitterAddFormView"
+        permission="cmf.ManagePortal"
+        />
+      
+    <browser:page 
+        for=".querysplitter.IQuerySplitter"
+        name="edit"
+        class=".querysplitter.QuerySplitterEditFormView"
+        permission="cmf.ManagePortal"
+        />
+    
+    <plone:ruleCondition
+        name="collective.contentrules.parentchild.QuerySplitter"
+        title="Query Splitter"
+        description="Special condition which executes a given rule on all results of a query"
+        for="*"
+        event="zope.component.interfaces.IObjectEvent"
+        addview="collective.contentrules.parentchild.QuerySplitter"
+        editview="edit"
+        schema=".querysplitter.IQuerySplitter"
+        factory=".querysplitter.QuerySplitter"
+        />
     
 </configure>

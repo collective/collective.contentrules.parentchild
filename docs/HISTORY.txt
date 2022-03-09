@@ -1,6 +1,12 @@
 Changelog
 =========
 
+
+Unreleased
+------------------
+* Querysplitter condition added. Takes a rule and applies the following conditions and actions to other items such as children.
+  [djay]
+
 1.0b1 (2009-03-25)
 ------------------
 

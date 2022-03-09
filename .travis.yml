@@ -1,9 +1,8 @@
 language: python
 sudo: false
+dist: xenial
 addons:
   apt:
-    sources:
-      - google-chrome
     packages:
       - google-chrome-stable
 matrix:
