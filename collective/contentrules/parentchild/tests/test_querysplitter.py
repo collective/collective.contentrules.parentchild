@@ -1,9 +1,9 @@
 from unittest import defaultTestLoader
 import unittest
-try:
-    from io import BytesIO
-except ImportError:
-    from cStringIO import StringIO as BytesIO  # py2.7
+# try:
+#     from io import BytesIO
+# except ImportError:
+#     from cStringIO import StringIO as BytesIO  # py2.7
 
 from zope.interface import implementer
 from zope.component import getUtility, getMultiAdapter
